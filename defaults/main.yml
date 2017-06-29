@@ -1,0 +1,14 @@
+---
+cert_passwd: 'abcd'
+ophdb_passwd: 'abcd'
+oph_user: 'ophuser'
+base_path: '/data/repository'
+io_ip: '127.0.0.1'
+io_prefix: 'oph-io'
+io_hostnames: []
+server_hostname: 'oph-server'
+server_ip: '127.0.0.1'
+nfs_subnet: '127.0.0.1/255.255.255.255'
+mysql_subnet: '127.0.0.1/255.255.255.255'
+deploy_type: 'install'
+node_type: 'server'

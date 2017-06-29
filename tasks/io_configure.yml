@@ -1,0 +1,117 @@
+#################################################
+# Tasks for general configuration
+- name: RedHat | Copy template of oph_configuration
+  template:
+    src=oph_configuration.j2
+    dest=/usr/local/ophidia/oph-cluster/oph-analytics-framework/etc/oph_configuration
+    mode=0644
+    owner={{ oph_user }}
+    group={{ oph_user }}
+
+- name: RedHat | Copy template of oph_soap_configuration
+  template:
+    src=oph_soap_configuration.j2
+    dest=/usr/local/ophidia/oph-cluster/oph-analytics-framework/etc/oph_soap_configuration
+    mode=0644
+    owner={{ oph_user }}
+    group={{ oph_user }}
+
+- name: RedHat | Copy template of oph_ioserver_conf
+  template:
+    src=oph_ioserver.conf.j2
+    dest=/usr/local/ophidia/oph-cluster/oph-io-server/etc/oph_ioserver.conf
+    mode=0644
+    owner={{ oph_user }}
+    group={{ oph_user }}
+
+#######################################################
+# Tasks to set data in NFS shared folder
+- name: RedHat | Wait for nfs folder
+  wait_for: path=/data/ophidia
+
+- name: RedHat | Delete web folder
+  file: path=/var/www/html/ophidia state=absent
+
+- name: RedHat | Create symlink on Ophidia web space
+  file: src=/data/ophidia dest=/var/www/html/ophidia state=link
+
+#######################################################
+# Tasks to setup/config mysql and necessary databases
+- name: RedHat | mysql prepare system tables
+  command: /usr/bin/mysql-systemd-start pre
+  become: true
+  become_user: mysql
+
+- name: RedHat | Start mysql_safe
+  shell: pgrep mysqld_safe || (/usr/bin/mysqld_safe --user=mysql 2>&1 > /dev/null &)
+  args:
+    executable: /bin/bash
+  become: true
+  become_user: mysql
+
+- name: RedHat | Wait for mysql start
+  wait_for: path=/var/lib/mysql/mysql.sock
+
+- name: RedHat | Set mysql root passwd
+  mysql_user: name=root password={{ ophdb_passwd }} host={{ item }}
+  with_items:
+    - localhost
+
+- name: RedHat | Copy template of .my.cnf to oph_user
+  template:
+    src=my.cnf.j2
+    dest=/home/{{ oph_user }}/.my.cnf
+    mode=0600
+    owner={{ oph_user }}
+    group={{ oph_user }}
+
+- name: RedHat | Copy template of .my.cnf to root
+  template:
+    src=my.cnf.j2
+    dest=/root/.my.cnf
+    mode=0600
+    owner=root
+    group=root
+
+- name: RedHat | Set mysql root passwd
+  mysql_user: name=root password={{ ophdb_passwd }} host={{ item }}
+  with_items:
+    - "{{ ansible_hostname }}"
+    - "{{ ansible_nodename }}"
+    - 127.0.0.1
+    - ::1
+
+- name: RedHat | import primitives
+  mysql_db: name=mysql state=import target=/usr/local/ophidia/oph-cluster/oph-primitives/etc/create_func.sql
+
+- name: RedHat | Copy template of ophdb-host.sql to root
+  template:
+    src=ophdb-host.sql.j2
+    dest=/tmp/ophdb-host.sql
+    mode=0600
+    owner=root
+    group=root
+
+- name: RedHat | import ophdb-host.sql
+  mysql_db: name=ophidiadb state=import target=/tmp/ophdb-host.sql login_host={{ server_ip  }} login_user=root login_password={{ ophdb_passwd }}
+
+- name: RedHat | Grant Mysql privileges
+  mysql_user: name=root password='{{ ophdb_passwd }}' host='{{ mysql_subnet }}' priv={{ item }}
+  with_items:
+    - db_ophidiadb_%.*:ALL
+    - mysql.*:EXECUTE
+
+#######################################################
+# Tasks to start the services
+- name: RedHat | start sshd
+  shell: pgrep sshd || /usr/sbin/sshd
+
+#######################################################
+# Task to start Ophidia IO service
+- name: RedHat | Start ophidia IO server
+  shell: pgrep oph_io_server || (nohup oph_io_server -i 1 2>&1 > /dev/null &)
+  args:
+    executable: /bin/bash
+  become: yes
+  become_user: "{{ oph_user }}"
+

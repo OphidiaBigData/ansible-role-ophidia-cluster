@@ -1,0 +1,5 @@
+INSERT INTO host (hostname, cores, memory) VALUES ('{{ io_ip }}',4,1);
+INSERT INTO hashost (idhostpartition, idhost) SELECT 1, host.idhost FROM host WHERE hostname='{{ io_ip }}';
+INSERT INTO dbmsinstance (idhost, login, password, port) SELECT host.idhost, 'root', '{{ ophdb_passwd }}', 3306 FROM host WHERE hostname='{{ io_ip }}';
+INSERT INTO dbmsinstance (idhost, login, password, port, ioservertype) SELECT host.idhost, 'root', '{{ ophdb_passwd }}', 65000, 'ophidiaio_memory' FROM host WHERE hostname='{{ io_ip }}';
+
