@@ -1,21 +1,21 @@
 #################################################
 # Tasks to install additional repos
-- name: RedHat | Install epel-elease
+- name: Install epel-release
   yum: name=epel-release state=latest
 
-- name: upgrade all packages
-  yum: name='*' state=latest
-
-- name: RedHat | Install mysql-community-release
+- name: Install mysql-community-release
   yum: name=http://repo.mysql.com/mysql-community-release-el7-7.noarch.rpm state=present
 
 #################################################
 # Tasks to install common packages
-- name: RedHat | Install necessary packages
+- name: Install necessary packages
   yum: name={{ item }} state=latest
   with_items:
     - curl
+    - "@development tools"
     - libssh2
+    - libtool-ltdl
+    - libtool-ltdl-devel
     - mpich
     - mpich-autoload
     - mysql-community-devel
@@ -30,11 +30,11 @@
 
 #################################################
 # Task to install libmatheval
-- name: RedHat | Check if libmatheval is installed
+- name: Check if libmatheval is installed
   stat: path=/usr/local/ophidia/extra/lib/libmatheval.so
   register: libmatheval
 
-- name: RedHat | Install libmatheval dependencies
+- name: Install libmatheval dependencies
   yum: name={{ item }} state=latest
   with_items:
     - compat-guile18
@@ -52,11 +52,11 @@
     - cpp
   when: libmatheval.stat.exists == False
 
-- name: RedHat | Create libmatheval folder
+- name: Create libmatheval folder
   file: path=/usr/local/ophidia/extra/src/libmatheval state=directory mode=0755
   when: libmatheval.stat.exists == False
 
-- name: RedHat | Download libmatheval
+- name: Download libmatheval
   get_url:
     url: "http://ftp.gnu.org/gnu/libmatheval/libmatheval-1.1.10.tar.gz"
     dest: /usr/local/ophidia/extra/src/libmatheval-1.1.10.tar.gz
@@ -64,7 +64,7 @@
     timeout: 1000
   when: libmatheval.stat.exists == False
 
-- name: RedHat | Extract libmatheval
+- name: Extract libmatheval
   unarchive: 
     src: /usr/local/ophidia/extra/src/libmatheval-1.1.10.tar.gz 
     dest: /usr/local/ophidia/extra/src/libmatheval
@@ -73,7 +73,7 @@
     creates: /usr/local/ophidia/extra/src/libmatheval/*
   when: libmatheval.stat.exists == False
 
-- name: RedHat | Build libmatheval
+- name: Build libmatheval
   shell:
     cd /usr/local/ophidia/extra/src/libmatheval && ./configure --prefix=/usr/local/ophidia/extra > /dev/null 2>&1 && make > /dev/null 2>&1
   args:
@@ -81,7 +81,7 @@
     creates: /usr/local/ophidia/extra/src/libmatheval/lib/.libs/libmatheval.so
   when: libmatheval.stat.exists == False
 
-- name: RedHat | Install libmatheval
+- name: Install libmatheval
   shell:
     cd /usr/local/ophidia/extra/src/libmatheval && make install > /dev/null 2>&1
   args:
@@ -89,7 +89,7 @@
     creates: /usr/local/ophidia/extra/lib/libmatheval.so
   when: libmatheval.stat.exists == False
 
-- name: RedHat | Drop folder source
+- name: Drop folder source
   file: path=/usr/local/ophidia/extra/src state=directory state=absent
   when: libmatheval.stat.exists == False
 

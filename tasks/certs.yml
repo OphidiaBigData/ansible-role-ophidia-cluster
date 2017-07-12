@@ -1,14 +1,14 @@
 #################################################
 # Tasks for Ophidia server SSL certs
-- name: RedHat | Check root SSL cert
+- name: Check root SSL cert
   stat: path=/usr/local/ophidia/oph-server/etc/cert/cacert.pem
   register: cacert
 
-- name: RedHat | Check server SSL cert
+- name: Check server SSL cert
   stat: path=/usr/local/ophidia/oph-server/etc/cert/myserver.pem
   register: myserver
 
-- name: RedHat | Creating root SSL cert
+- name: Create root SSL cert
   command: >
     openssl req
       -newkey rsa:1024
@@ -24,7 +24,7 @@
   become_user: "{{ oph_user }}"
   when: cacert.stat.exists == False or myserver.stat.exists == False
 
-- name: RedHat | Sign root SSL cert
+- name: Sign root SSL cert
   command: >
     openssl x509
       -req
@@ -41,7 +41,7 @@
   become_user: "{{ oph_user }}"
   when: cacert.stat.exists == False or myserver.stat.exists == False
 
-- name: RedHat | merge cert and key of root cert
+- name: Merge cert and key of root cert
   shell: cat rootcert.pem rootkey.pem > cacert.pem
   args:
     chdir: /usr/local/ophidia/oph-server/etc/cert
@@ -50,7 +50,7 @@
   become_user: "{{ oph_user }}"
   when: cacert.stat.exists == False or myserver.stat.exists == False
 
-- name: RedHat | Creating server SSL cert
+- name: Create server SSL cert
   command: >
     openssl req
       -newkey rsa:1024
@@ -66,7 +66,7 @@
   become_user: "{{ oph_user }}"
   when: cacert.stat.exists == False or myserver.stat.exists == False
 
-- name: RedHat | Sign server SSL cert
+- name: Sign server SSL cert
   command: >
     openssl x509
       -req
@@ -85,7 +85,7 @@
   become_user: "{{ oph_user }}"
   when: cacert.stat.exists == False or myserver.stat.exists == False
 
-- name: RedHat | merge cert and key of server cert
+- name: Merge cert and key of server cert
   shell: cat servercert.pem serverkey.pem rootcert.pem > myserver.pem
   args:
     chdir: /usr/local/ophidia/oph-server/etc/cert
@@ -94,7 +94,7 @@
   become_user: "{{ oph_user }}"
   when: cacert.stat.exists == False or myserver.stat.exists == False
 
-- name: RedHat | Remove intermediate certs
+- name: Remove intermediate certs
   file: path={{ item }} state=absent
   with_items:
     - /usr/local/ophidia/oph-server/etc/cert/rootcert.pem

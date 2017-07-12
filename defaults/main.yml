@@ -5,6 +5,7 @@ oph_user: 'ophuser'
 base_path: '/data/repository'
 io_ip: '127.0.0.1'
 io_prefix: 'oph-io'
+io_node_number: 3
 io_hostnames: []
 server_hostname: 'oph-server'
 server_ip: '127.0.0.1'
