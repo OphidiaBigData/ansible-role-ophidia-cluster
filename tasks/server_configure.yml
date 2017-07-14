@@ -141,7 +141,7 @@
 #######################################################
 # Tasks to start the services
 - name: Start httpd
-  service: name=httpd state=started enabled=no
+  shell: pgrep httpd || /usr/sbin/httpd
 
 - name: Start sshd
   service: name=sshd state=started enabled=yes
