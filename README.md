@@ -24,7 +24,7 @@ Role Variables
 10. server_ip: Ophidia Server node ip address
 11. nfs_subnet: subnetwork for the Ophidia io-compute nodes (for NFS folder mount)
 12. mysql_subnet: subnetwork for MySQL server on the cluster nodes (for database grant)
-13. deploy_type: type of deployment ('install' or 'configure')
+13. deploy_type: type of deployment ('install', 'configure' or 'complete')
 14. node_type: type of node to deploy ('server' or 'io')
 
 Dependencies

@@ -1,15 +1,15 @@
 - include: server_install.yml
-  when: deploy_type == 'install' and node_type == 'server'
+  when: (deploy_type == 'complete' or deploy_type == 'install') and node_type == 'server'
   tags: package
 
 - include: server_configure.yml
-  when: deploy_type == 'configure' and node_type == 'server'
+  when: (deploy_type == 'complete' or deploy_type == 'configure') and node_type == 'server'
   tags: package
 
 - include: io_install.yml
-  when: deploy_type == 'install' and node_type == 'io'
+  when: (deploy_type == 'complete' or deploy_type == 'install') and node_type == 'io'
   tags: package
 
 - include: io_configure.yml
-  when: deploy_type == 'configure' and node_type == 'io'
+  when: (deploy_type == 'complete' or deploy_type == 'configure') and node_type == 'io'
   tags: package
