@@ -32,6 +32,11 @@ Dependencies
 
 Requires grycap.nfs and grycap.slurm roles.
 
+Requirements
+------------
+
+Requires at least Ansible v2.2. 
+
 Example Playbook
 ----------------
 
