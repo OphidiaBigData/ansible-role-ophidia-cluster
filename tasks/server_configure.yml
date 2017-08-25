@@ -16,6 +16,14 @@
     owner={{ oph_user }}
     group={{ oph_user }}
 
+- name: Copy template of 'check_io_nodes' file
+  template:
+    src=check_io_nodes.sh.j2
+    dest=/usr/local/ophidia/check_io_nodes.sh
+    mode=0755
+    owner={{ oph_user }}
+    group={{ oph_user }}
+
 # Create server certs
 - include: certs.yml
 
@@ -97,6 +105,7 @@
     mode=0600
     owner=root
     group=root
+  when: new_ophidiadbs.changed
 
 - name: Import ophdb-partition.sql
   mysql_db: name=ophidiadb state=import target=/tmp/ophdb-partition.sql
@@ -108,6 +117,14 @@
     - ophidiadb.*:ALL
     - oph_dimensions.*:ALL
     - mysql.*:EXECUTE
+
+- name: Check IO nodes in OphidiaDB
+  shell:
+    /usr/local/ophidia/check_io_nodes
+  args:
+    executable: /bin/bash
+  become: yes
+  become_user: "{{ oph_user }}"
 
 #######################################################
 # Tasks to generate DSA keys for oph_user

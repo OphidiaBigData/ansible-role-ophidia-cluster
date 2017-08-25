@@ -16,10 +16,10 @@ Role Variables
 2. ophdb_passwd: the password for MySQL
 3. oph_user: user that will run the Ophidia framework
 4. base_path: base path for shared data folder
-5. io_ip: IP address of Ophidia IO node being currently deployed
-6. io_prefix: hostname perfix of Ophidia IO nodes
-7. io_node_number: number of IO nodes considered in the cluster
-8. io_hostnames: list of hostnames of Ophidia IO nodes
+5. io_prefix: hostname perfix of Ophidia IO nodes
+6. io_node_number: number of IO nodes considered in the cluster
+7. io_hostnames: list of hostnames of Ophidia IO nodes
+8. io_ips: list of IP addresses of Ophidia IO nodes
 9. server_hostname: Ophidia Server node hostname
 10. server_ip: Ophidia Server node ip address
 11. nfs_subnet: subnetwork for the Ophidia io-compute nodes (for NFS folder mount)
@@ -60,11 +60,11 @@ An example of playbook to configure the Ophidia cluster:
 ---
 - hosts: oph-server
   roles:
-    - {role: 'OphidiaBigData.ophidia-cluster', node_type: 'server', deploy_type: 'configure', server_hostname: "{{ansible_hostname}}", io_hostnames: "{{ groups['oph-io']|map('extract', hostvars, 'ansible_hostname')|list }}", server_ip: "{{ ansible_default_ipv4.address }}" }
+    - {role: 'OphidiaBigData.ophidia-cluster', node_type: 'server', deploy_type: 'configure', server_hostname: "{{ansible_hostname}}", io_hostnames: "{{ groups['oph-io']|map('extract', hostvars, 'ansible_hostname')|list }}", server_ip: "{{ ansible_default_ipv4.address }}", io_ips: "{{ groups['oph-io']|map('extract', hostvars, 'ansible_default_ipv4')|list }}" }
 
 - hosts: oph-io
   roles:
-    - {role: 'OphidiaBigData.ophidia-cluster', node_type: 'io', deploy_type: 'configure', server_hostname: "{{ hostvars['oph-server']['ansible_hostname'] }}", io_hostnames: "{{ groups['oph-io']|map('extract', hostvars, 'ansible_hostname')|list }}", server_ip: "{{hostvars['oph-server']['ansible_default_ipv4']['address']}}", io_ip: "{{ ansible_default_ipv4.address }}" }
+    - {role: 'OphidiaBigData.ophidia-cluster', node_type: 'io', deploy_type: 'configure', server_hostname: "{{ hostvars['oph-server']['ansible_hostname'] }}", io_hostnames: "{{ groups['oph-io']|map('extract', hostvars, 'ansible_hostname')|list }}", server_ip: "{{hostvars['oph-server']['ansible_default_ipv4']['address']}}" }
 
 ```
 

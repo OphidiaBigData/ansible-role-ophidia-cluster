@@ -1,0 +1,13 @@
+#!/bin/bash
+
+source /usr/local/ophidia/oph-server/etc/ophidiadb.conf
+
+mysql -u $OPHDB_LOGIN -p$OPHDB_PWD -h $OPHDB_HOST -P $OPHDB_PORT -e "select host.idhost as idhost, hostname from $OPHDB_NAME.host;" -N | while read idhost hostname
+do
+{% for ip in io_ips %}
+   if [ "$hostname" == "{{ ip }}" ]; then
+      continue
+   fi
+{% endfor %}
+   mysql -u $OPHDB_LOGIN -p$OPHDB_PWD -h $OPHDB_HOST -P $OPHDB_PORT -e "DELETE FROM $OPHDB_NAME.host WHERE host.idhost=$idhost";
+done
