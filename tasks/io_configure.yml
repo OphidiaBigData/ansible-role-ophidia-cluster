@@ -42,6 +42,20 @@
   when: sym.stat.islnk is defined and sym.stat.islnk == False
 
 #######################################################
+# Tasks to start the services
+- name: Start sshd
+  service: name=sshd state=started enabled=yes
+
+#######################################################
+# Task to start Ophidia IO service
+- name: Start ophidia IO server
+  shell: pgrep oph_io_server || (nohup oph_io_server -i 1 2>&1 > /dev/null &)
+  args:
+    executable: /bin/bash
+  become: yes
+  become_user: "{{ oph_user }}"
+
+#######################################################
 # Tasks to setup/config mysql and necessary databases
 - name: Start the MySQL service
   service: name=mysql state=started enabled=yes
@@ -77,6 +91,12 @@
 - name: Import Ophidia primitives
   mysql_db: name=mysql state=import target=/usr/local/ophidia/oph-cluster/oph-primitives/etc/create_func.sql
 
+- name: Grant Mysql privileges
+  mysql_user: name=root password='{{ ophdb_passwd }}' host='{{ mysql_subnet }}' priv={{ item }}
+  with_items:
+    - db_ophidiadb_%.*:ALL
+    - mysql.*:EXECUTE
+
 - name: Copy template of ophdb-host.sql to root
   template:
     src=ophdb-host.sql.j2
@@ -90,24 +110,4 @@
 
 - name: Import ophdb-host.sql
   mysql_db: name=ophidiadb state=import target=/tmp/ophdb-host.sql login_host={{ server_ip  }} login_user=root login_password={{ ophdb_passwd }}
-
-- name: Grant Mysql privileges
-  mysql_user: name=root password='{{ ophdb_passwd }}' host='{{ mysql_subnet }}' priv={{ item }}
-  with_items:
-    - db_ophidiadb_%.*:ALL
-    - mysql.*:EXECUTE
-
-#######################################################
-# Tasks to start the services
-- name: Start sshd
-  service: name=sshd state=started enabled=yes
-
-#######################################################
-# Task to start Ophidia IO service
-- name: Start ophidia IO server
-  shell: pgrep oph_io_server || (nohup oph_io_server -i 1 2>&1 > /dev/null &)
-  args:
-    executable: /bin/bash
-  become: yes
-  become_user: "{{ oph_user }}"
 
