@@ -19,7 +19,7 @@
 - name: Copy template of 'check_io_nodes' file
   template:
     src=check_io_nodes.sh.j2
-    dest=/usr/local/ophidia/check_io_nodes.sh
+    dest=/tmp/check_io_nodes.sh
     mode=0755
     owner={{ oph_user }}
     group={{ oph_user }}
@@ -120,7 +120,7 @@
 
 - name: Check IO nodes in OphidiaDB
   shell:
-    /usr/local/ophidia/check_io_nodes
+    /tmp/check_io_nodes.sh
   args:
     executable: /bin/bash
   become: yes
