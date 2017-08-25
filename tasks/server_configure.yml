@@ -127,45 +127,6 @@
   become_user: "{{ oph_user }}"
 
 #######################################################
-# Tasks to generate DSA keys for oph_user
-- name: Key generation
-  shell: ssh-keygen -t dsa -f /home/{{ oph_user }}/.ssh/id_dsa -N "" -q
-  args:
-    executable: /bin/bash
-    creates: /home/{{ oph_user }}/.ssh/id_dsa
-  become: yes
-  become_user: "{{ oph_user }}"
-
-- name: Copy the key to authorized_keys file
-  shell:  (grep -f id_dsa.pub authorized_keys ) || (cat id_dsa.pub >> authorized_keys)
-  args:
-    chdir: /home/{{ oph_user }}/.ssh
-    executable: /bin/bash
-  become: yes
-  become_user: "{{ oph_user }}"
-
-- name: Set permissions on authorized_keys
-  file: path=/home/{{ oph_user }}/.ssh/authorized_keys mode=600 owner={{ oph_user }} group={{ oph_user }}
-  become: yes
-  become_user: "{{ oph_user }}"
-
-- name: Remove nologin
-  file: path=/run/nologin state=absent
-
-- name: Set known_hosts
-  shell: ssh-keyscan 127.0.0.1 >> known_hosts
-  args:
-    chdir: /home/{{ oph_user }}/.ssh
-    executable: /bin/bash
-  become: yes
-  become_user: "{{ oph_user }}"
-
-- name: Set permissions on known_hosts
-  file: path=/home/{{ oph_user }}/.ssh/known_hosts mode=644 owner={{ oph_user }} group={{ oph_user }}
-  become: yes
-  become_user: "{{ oph_user }}"
-
-#######################################################
 # Tasks to start the services
 - name: Start httpd
   shell: pgrep httpd || /usr/sbin/httpd
