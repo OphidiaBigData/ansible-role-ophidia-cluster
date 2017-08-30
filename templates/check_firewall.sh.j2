@@ -3,7 +3,7 @@
 IFS=" "
 for ip in $(firewall-cmd --list-all --zone=trusted | grep sources)
 do
-   if [ "$ip" == "sources:" ] || [ "$ip" == "127.0.0.1"] || [ "$ip" == "{{ server_ip }}" ]; then
+   if [ "$ip" == "sources:" ] || [ "$ip" == "127.0.0.1" ] || [ "$ip" == "{{ server_ip }}" ]; then
       continue
    fi
 {% for ip in io_ips %}
