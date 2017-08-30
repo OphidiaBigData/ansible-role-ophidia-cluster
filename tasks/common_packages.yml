@@ -27,6 +27,7 @@
     - sudo
     - wget
     - nfs-utils
+    - firewalld
 
 #################################################
 # Task to install libmatheval

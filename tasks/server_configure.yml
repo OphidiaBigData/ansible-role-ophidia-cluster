@@ -1,4 +1,54 @@
 #################################################
+# Setup firewall
+- name: Copy template of 'check_firewall' file
+  template:
+    src=check_firewall.sh.j2
+    dest=/tmp/check_firewall.sh
+    mode=0700
+    owner=root
+    group=root
+
+- firewalld:
+    service: "{{ item }}"
+    zone: public
+    permanent: true
+    state: enabled
+    immediate: yes
+  with_items:
+     - "https"
+     - "http"
+
+- firewalld:
+    port: "11732/tcp"
+    zone: public
+    permanent: true
+    state: enabled
+    immediate: yes
+
+- firewalld:
+    source: "{{ item }}"
+    permanent: true
+    zone: trusted
+    state: enabled
+    immediate: yes
+  with_items:
+    - "{{ io_ips }}"
+    - "{{ server_ip }}”
+    - "127.0.0.1"
+
+- name: Start firewalld
+  service: name=firewalld state=started enabled=yes
+
+- name: Reload firewall rules
+  shell: firewall-cmd --reload
+
+- name: Check IO nodes in firewall
+  shell:
+    /tmp/check_firewall.sh
+  args:
+    executable: /bin/bash
+
+#################################################
 # Tasks for general configuration
 - name: Copy template of Ophidia server server.conf
   template:

@@ -35,7 +35,7 @@ Requires grycap.nfs and grycap.slurm roles.
 Requirements
 ------------
 
-Requires at least Ansible v2.2. 
+Requires at least Ansible v2.3.
 
 Example Playbook
 ----------------
@@ -46,7 +46,7 @@ An example of playbook to install the Ophidia cluster:
 ---
 - hosts: oph-server
   roles:
-    - { role: 'OphidiaBigData.ophidia-cluster', node_type: 'server', deploy_type: 'install', server_hostname: "{{ansible_hostname}}", io_hostnames: "{{ groups['oph-io']|map('extract', hostvars, 'ansible_hostname')|list }}", server_ip: "{{ ansible_default_ipv4.address }}" }
+    - { role: 'OphidiaBigData.ophidia-cluster', node_type: 'server', deploy_type: 'install', server_hostname: "{{ansible_hostname}}", io_hostnames: "{{ groups['oph-io']|map('extract', hostvars, 'ansible_hostname')|list }}", server_ip: "{{ ansible_default_ipv4.address }}", io_node_number: "{{ groups['oph-io']|length }}" }
 
 - hosts: oph-io
   roles:
@@ -60,11 +60,11 @@ An example of playbook to configure the Ophidia cluster:
 ---
 - hosts: oph-server
   roles:
-    - {role: 'OphidiaBigData.ophidia-cluster', node_type: 'server', deploy_type: 'configure', server_hostname: "{{ansible_hostname}}", io_hostnames: "{{ groups['oph-io']|map('extract', hostvars, 'ansible_hostname')|list }}", server_ip: "{{ ansible_default_ipv4.address }}", io_ips: "{{ groups['oph-io']|map('extract', hostvars, 'ansible_default_ipv4')|list }}" }
+    - {role: 'OphidiaBigData.ophidia-cluster', node_type: 'server', deploy_type: 'configure', server_hostname: "{{ansible_hostname}}", io_hostnames: "{{ groups['oph-io']|map('extract', hostvars, 'ansible_hostname')|list }}", io_ips: "{{ groups['oph-io']|map('extract', hostvars, 'ansible_default_ipv4')|list }}", server_ip: "{{ ansible_default_ipv4.address }}", io_node_number: "{{ groups['oph-io']|length }}" }
 
 - hosts: oph-io
   roles:
-    - {role: 'OphidiaBigData.ophidia-cluster', node_type: 'io', deploy_type: 'configure', server_hostname: "{{ hostvars['oph-server']['ansible_hostname'] }}", io_hostnames: "{{ groups['oph-io']|map('extract', hostvars, 'ansible_hostname')|list }}", server_ip: "{{hostvars['oph-server']['ansible_default_ipv4']['address']}}" }
+    - {role: 'OphidiaBigData.ophidia-cluster', node_type: 'io', deploy_type: 'configure', server_hostname: "{{ hostvars['oph-server']['ansible_hostname'] }}", io_hostnames: "{{ groups['oph-io']|map('extract', hostvars, 'ansible_hostname')|list }}", io_ips: "{{ groups['oph-io']|map('extract', hostvars, ['ansible_default_ipv4', 'address'])|list }}", server_ip: "{{hostvars['oph-server']['ansible_default_ipv4']['address']}}" }
 
 ```
 
