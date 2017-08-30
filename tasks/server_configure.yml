@@ -1,5 +1,5 @@
 #################################################
-# Setup firewall
+# Tasks to setup firewall
 - name: Copy template of 'check_firewall' file
   template:
     src=check_firewall.sh.j2
@@ -58,6 +58,14 @@
     owner={{ oph_user }}
     group={{ oph_user }}
 
+- name: Copy template of Ophidia server env.php
+  template:
+    src=env.php.j2
+    dest=/var/www/html/ophidia/env.php
+    mode=0644
+    owner={{ oph_user }}
+    group={{ oph_user }}
+
 - name: Copy template of Ophidia server ophidiadb.conf
   template:
     src=ophidiadb.conf.j2
@@ -73,6 +81,14 @@
     mode=0755
     owner={{ oph_user }}
     group={{ oph_user }}
+
+- name: Copy template of Ophidia web server conf ophidia-web.conf
+  template:
+    src=ophidia-web.conf.j2
+    dest=/etc/httpd/conf.d/ophidia-web.conf
+    mode=0644
+    owner=root
+    group=root
 
 # Create server certs
 - include: certs.yml
@@ -177,9 +193,38 @@
   become_user: "{{ oph_user }}"
 
 #######################################################
+# Tasks for Ophidia web and HTTPS configuration
+- name: Check HTTP server SSL cert
+  stat: path=/etc/pki/tls/certs/ophidia-web.crt
+  register: httpserver
+
+- name: Create HTTP server SSL cert
+  command: >
+    openssl req
+      -x509
+      -nodes
+      -days 730
+      -newkey rsa:2048
+      -passout pass:{{ cert_passwd }}
+      -subj "/"
+      -keyout /etc/pki/tls/private/ophidia-web.key
+      -out /etc/pki/tls/certs/ophidia-web.crt
+  args:
+    creates: /etc/pki/tls/certs/ophidia-web.crt
+  when: httpserver.stat.exists == False
+
+- name: Set HTTPS server cert permission
+  file:
+    path: "{{ item }}"
+    mode: 0600
+  with_items:
+    - "/etc/pki/tls/private/ophidia-web.key"
+    - "/etc/pki/tls/certs/ophidia-web.crt"
+
+#######################################################
 # Tasks to start the services
 - name: Start httpd
-  shell: pgrep httpd || /usr/sbin/httpd
+  service: name=httpd state=started enabled=yes
 
 - name: Start sshd
   service: name=sshd state=started enabled=yes

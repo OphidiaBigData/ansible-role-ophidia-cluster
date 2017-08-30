@@ -1,0 +1,15 @@
+<VirtualHost {{ server_ip }}:80>
+   RedirectMatch permanent /ophidia/sessions/(.*) /ophidia/sessions.php/$1
+</VirtualHost>
+
+<VirtualHost {{ server_ip }}:443>
+   SSLEngine on
+   SSLProtocol all -SSLv2 -SSLv3
+   SSLCipherSuite HIGH:MEDIUM:!aNULL:!MD5:!SEED:!IDEA
+   SSLCertificateFile /etc/pki/tls/certs/ophidia-web.crt
+   SSLCertificateKeyFile /etc/pki/tls/private/ophidia-web.key
+
+   RedirectMatch permanent /ophidia/sessions/(.*) /ophidia/sessions.php/$1
+</VirtualHost>
+
+

@@ -1,5 +1,5 @@
 #################################################
-# Setup firewall
+# Tasks to setup firewall
 - name: Copy template of 'check_firewall' file
   template:
     src=check_firewall.sh.j2

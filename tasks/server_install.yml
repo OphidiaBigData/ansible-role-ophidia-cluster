@@ -10,6 +10,7 @@
     - httpd
     - php
     - gsoap
+    - mod_ssl
 
 # Download specific packages
 - name: Creates Ophidia extra directory
@@ -74,4 +75,9 @@
 
 - name: Set permissions on Ophidia web space
   file: path=/data/ophidia owner={{ oph_user }} group={{ oph_user }} state=directory recurse=yes
+
+#################################################
+# Set SELinux mode
+- name: Disable SELinux
+  selinux: state=permissive policy=targeted
 
