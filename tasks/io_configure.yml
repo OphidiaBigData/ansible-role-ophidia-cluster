@@ -13,10 +13,9 @@
     permanent: true
     zone: trusted
     state: enabled
-    immediate: yes
   with_items:
     - "{{ io_ips }}"
-    - "{{ server_ip }}”
+    - "{{ server_ip }}"
     - "127.0.0.1"
 
 - name: Start firewalld
