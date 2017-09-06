@@ -8,7 +8,8 @@
     owner=root
     group=root
 
-- firewalld:
+- name: Enable services on firewalld
+  firewalld:
     service: "{{ item }}"
     zone: public
     permanent: true
@@ -17,13 +18,15 @@
      - "https"
      - "http"
 
-- firewalld:
+- name: Enable ports on firewalld
+  firewalld:
     port: "11732/tcp"
     zone: public
     permanent: true
     state: enabled
 
-- firewalld:
+- name: Enable IPs on firewalld
+  firewalld:
     source: "{{ item }}"
     permanent: true
     zone: trusted

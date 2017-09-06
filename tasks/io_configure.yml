@@ -8,7 +8,8 @@
     owner=root
     group=root
 
-- firewalld:
+- name: Enable IPs on firewalld
+  firewalld:
     source: "{{ item }}"
     permanent: true
     zone: trusted
