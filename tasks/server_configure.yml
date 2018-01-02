@@ -193,6 +193,29 @@
   become_user: "{{ oph_user }}"
 
 #######################################################
+# Task to setup Ophidia users
+- name: Update Ophidia admin user password
+  shell: /usr/local/ophidia/oph-server/bin/oph_manage_user -a update -u admin -p {{ oph_account_passwd }}
+  args:
+    executable: /bin/bash
+  become: yes
+  become_user: "{{ oph_user }}"
+
+- name: Delete Ophidia default test user
+  shell: /usr/local/ophidia/oph-server/bin/oph_manage_user -a delete -u oph-test
+  args:
+    executable: /bin/bash
+  become: yes
+  become_user: "{{ oph_user }}"
+
+- name: Add Ophidia specific user
+  shell: /usr/local/ophidia/oph-server/bin/oph_manage_user -a add -u {{ oph_account_user }} -p {{ oph_account_passwd }} -r yes
+  args:
+    executable: /bin/bash
+  become: yes
+  become_user: "{{ oph_user }}"
+
+#######################################################
 # Tasks for Ophidia web and HTTPS configuration
 - name: Check HTTP server SSL cert
   stat: path=/etc/pki/tls/certs/ophidia-web.crt

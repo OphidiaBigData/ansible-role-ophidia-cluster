@@ -2,6 +2,8 @@
 cert_passwd: 'abcd'
 ophdb_passwd: 'abcd'
 oph_user: 'ophuser'
+oph_account_user: 'oph-test'
+oph_account_passwd: 'abcd'
 base_path: '/data/repository'
 io_prefix: 'oph-io'
 io_node_number: 3

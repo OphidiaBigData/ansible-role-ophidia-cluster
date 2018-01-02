@@ -15,17 +15,19 @@ Role Variables
 1. cert_passwd: the password for the certificates and user account
 2. ophdb_passwd: the password for MySQL
 3. oph_user: user that will run the Ophidia framework
-4. base_path: base path for shared data folder
-5. io_prefix: hostname perfix of Ophidia IO nodes
-6. io_node_number: number of IO nodes considered in the cluster
-7. io_hostnames: list of hostnames of Ophidia IO nodes
-8. io_ips: list of IP addresses of Ophidia IO nodes
-9. server_hostname: Ophidia Server node hostname
-10. server_ip: Ophidia Server node ip address
-11. nfs_subnet: subnetwork for the Ophidia io-compute nodes (for NFS folder mount)
-12. mysql_subnet: subnetwork for MySQL server on the cluster nodes (for database grant)
-13. deploy_type: type of deployment ('install', 'configure' or 'complete')
-14. node_type: type of node to deploy ('server' or 'io')
+4. oph_account_user: username of the Ophidia user account to be created
+5. oph_account_passwd: password of the Ophidia user account to be created
+6. base_path: base path for shared data folder
+7. io_prefix: hostname perfix of Ophidia IO nodes
+8. io_node_number: number of IO nodes considered in the cluster
+9. io_hostnames: list of hostnames of Ophidia IO nodes
+10. io_ips: list of IP addresses of Ophidia IO nodes
+11. server_hostname: Ophidia Server node hostname
+12. server_ip: Ophidia Server node ip address
+13. nfs_subnet: subnetwork for the Ophidia io-compute nodes (for NFS folder mount)
+14. mysql_subnet: subnetwork for MySQL server on the cluster nodes (for database grant)
+15. deploy_type: type of deployment ('install', 'configure' or 'complete')
+16. node_type: type of node to deploy ('server' or 'io')
 
 Dependencies
 ------------
