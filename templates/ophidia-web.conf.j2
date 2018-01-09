@@ -1,8 +1,8 @@
-<VirtualHost {{ server_ip }}:80>
+<VirtualHost {{ public_server_ip }}:80>
    RedirectMatch permanent /ophidia/sessions/(.*) /ophidia/sessions.php/$1
 </VirtualHost>
 
-<VirtualHost {{ server_ip }}:443>
+<VirtualHost {{ public_server_ip }}:443>
    SSLEngine on
    SSLProtocol all -SSLv2 -SSLv3
    SSLCipherSuite HIGH:MEDIUM:!aNULL:!MD5:!SEED:!IDEA

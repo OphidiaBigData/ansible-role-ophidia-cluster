@@ -16,7 +16,7 @@
     state: enabled
   with_items:
     - "{{ io_ips }}"
-    - "{{ server_ip }}"
+    - "{{ private_server_ip }}"
     - "127.0.0.1"
 
 - name: Start firewalld
@@ -139,8 +139,8 @@
     group=root
 
 - name: Wait for mysql start on server node
-  wait_for: host={{ server_ip  }} port=3306
+  wait_for: host={{ private_server_ip  }} port=3306
 
 - name: Import ophdb-host.sql
-  mysql_db: name=ophidiadb state=import target=/tmp/ophdb-host.sql login_host={{ server_ip  }} login_user=root login_password={{ ophdb_passwd }}
+  mysql_db: name=ophidiadb state=import target=/tmp/ophdb-host.sql login_host={{ private_server_ip  }} login_user=root login_password={{ ophdb_passwd }}
 

@@ -1,14 +1,14 @@
 OPHDB_NAME=ophidiadb
-OPHDB_HOST={{ server_ip }}
+OPHDB_HOST={{ private_server_ip }}
 OPHDB_PORT=3306
 OPHDB_LOGIN=root
 OPHDB_PWD={{ ophdb_passwd }}
 DIMDB_NAME=oph_dimensions
-DIMDB_HOST={{ server_ip }}
+DIMDB_HOST={{ private_server_ip }}
 DIMDB_PORT=3306
 DIMDB_LOGIN=root
 DIMDB_PWD={{ ophdb_passwd }}
-WEB_SERVER=http://{{ server_ip }}/ophidia
+WEB_SERVER=http://{{ public_server_ip }}/ophidia
 WEB_SERVER_LOCATION=/var/www/html/ophidia
 MEMORY=1024
 BASE_SRC_PATH=/data/repository
