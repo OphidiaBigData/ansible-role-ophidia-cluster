@@ -57,6 +57,25 @@
     owner={{ oph_user }}
     group={{ oph_user }}
 
+- name: Copy oph_script_configuration file
+  copy:
+    src=oph_script_configuration
+    dest=/usr/local/ophidia/oph-cluster/oph-analytics-framework/etc/oph_script_configuration
+    mode=0644
+    owner={{ oph_user }}
+    group={{ oph_user }}
+
+- name: Create folder for scripts
+  file: path=/usr/local/ophidia/oph-cluster/oph-analytics-framework/scripts owner={{ oph_user }} group={{ oph_user }} state=directory
+
+- name: Copy oph_script_retrieve.sh file
+  copy:
+    src=oph_script_retrieve.sh
+    dest=/usr/local/ophidia/oph-cluster/oph-analytics-framework/scripts/oph_script_retrieve.sh
+    mode=0744
+    owner={{ oph_user }}
+    group={{ oph_user }}
+
 #######################################################
 # Tasks to set data in NFS shared folder
 - name: Wait for nfs folder

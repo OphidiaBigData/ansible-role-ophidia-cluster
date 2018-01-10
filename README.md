@@ -49,11 +49,11 @@ An example of playbook to install the Ophidia cluster:
 ---
 - hosts: oph-server
   roles:
-    - { role: 'OphidiaBigData.ophidia-cluster', node_type: 'server', deploy_type: 'install', server_hostname: "{{ansible_hostname}}", io_hostnames: "{{ groups['oph-io']|map('extract', hostvars, 'ansible_hostname')|list }}", server_ip: "{{ ansible_default_ipv4.address }}", io_node_number: "{{ groups['oph-io']|length }}" }
+    - { role: 'OphidiaBigData.ophidia-cluster', node_type: 'server', deploy_type: 'install', server_hostname: "{{ansible_hostname}}", io_hostnames: "{{ groups['oph-io']|map('extract', hostvars, 'ansible_hostname')|list }}", private_server_ip: "{{ ansible_default_ipv4.address }}", io_node_number: "{{ groups['oph-io']|length }}" }
 
 - hosts: oph-io
   roles:
-    - { role: 'OphidiaBigData.ophidia-cluster', node_type: 'io', deploy_type: 'install', server_hostname: "{{ hostvars['oph-server']['ansible_hostname'] }}", io_hostnames: "{{ groups['oph-io']|map('extract', hostvars, 'ansible_hostname')|list }}", server_ip: "{{ hostvars['oph-server']['ansible_default_ipv4']['address'] }}" }
+    - { role: 'OphidiaBigData.ophidia-cluster', node_type: 'io', deploy_type: 'install', server_hostname: "{{ hostvars['oph-server']['ansible_hostname'] }}", io_hostnames: "{{ groups['oph-io']|map('extract', hostvars, 'ansible_hostname')|list }}", private_server_ip: "{{ hostvars['oph-server']['ansible_default_ipv4']['address'] }}" }
 
 ```
 
@@ -63,11 +63,11 @@ An example of playbook to configure the Ophidia cluster:
 ---
 - hosts: oph-server
   roles:
-    - {role: 'OphidiaBigData.ophidia-cluster', node_type: 'server', deploy_type: 'configure', server_hostname: "{{ansible_hostname}}", io_hostnames: "{{ groups['oph-io']|map('extract', hostvars, 'ansible_hostname')|list }}", io_ips: "{{ groups['oph-io']|map('extract', hostvars, 'ansible_default_ipv4')|list }}", server_ip: "{{ ansible_default_ipv4.address }}", nfs_subnet: "{{ ansible_default_ipv4.network }}/{{ ansible_default_ipv4.netmask }}", mysql_subnet: "{{ ansible_default_ipv4.network }}/{{ ansible_default_ipv4.netmask }}", io_node_number: "{{ groups['oph-io']|length }}" }
+    - {role: 'OphidiaBigData.ophidia-cluster', node_type: 'server', deploy_type: 'configure', server_hostname: "{{ansible_hostname}}", io_hostnames: "{{ groups['oph-io']|map('extract', hostvars, 'ansible_hostname')|list }}", io_ips: "{{ groups['oph-io']|map('extract', hostvars, 'ansible_default_ipv4')|list }}", private_server_ip: "{{ ansible_default_ipv4.address }}", public_server_ip: "{{ ansible_default_ipv4.address }}", nfs_subnet: "{{ ansible_default_ipv4.network }}/{{ ansible_default_ipv4.netmask }}", mysql_subnet: "{{ ansible_default_ipv4.network }}/{{ ansible_default_ipv4.netmask }}", io_node_number: "{{ groups['oph-io']|length }}" }
 
 - hosts: oph-io
   roles:
-    - {role: 'OphidiaBigData.ophidia-cluster', node_type: 'io', deploy_type: 'configure', server_hostname: "{{ hostvars['oph-server']['ansible_hostname'] }}", io_hostnames: "{{ groups['oph-io']|map('extract', hostvars, 'ansible_hostname')|list }}", io_ips: "{{ groups['oph-io']|map('extract', hostvars, ['ansible_default_ipv4', 'address'])|list }}", server_ip: "{{hostvars['oph-server']['ansible_default_ipv4']['address']}}", nfs_subnet: "{{ ansible_default_ipv4.network }}/{{ ansible_default_ipv4.netmask }}", mysql_subnet: "{{ ansible_default_ipv4.network }}/{{ ansible_default_ipv4.netmask }}" }
+    - {role: 'OphidiaBigData.ophidia-cluster', node_type: 'io', deploy_type: 'configure', server_hostname: "{{ hostvars['oph-server']['ansible_hostname'] }}", io_hostnames: "{{ groups['oph-io']|map('extract', hostvars, 'ansible_hostname')|list }}", io_ips: "{{ groups['oph-io']|map('extract', hostvars, ['ansible_default_ipv4', 'address'])|list }}", private_server_ip: "{{ ansible_default_ipv4.address }}", public_server_ip: "{{ ansible_default_ipv4.address }}", nfs_subnet: "{{ ansible_default_ipv4.network }}/{{ ansible_default_ipv4.netmask }}", mysql_subnet: "{{ ansible_default_ipv4.network }}/{{ ansible_default_ipv4.netmask }}" }
 
 ```
 

@@ -164,9 +164,9 @@
   mysql_db: name=ophidiadb state=import target=/usr/local/ophidia/oph-cluster/oph-analytics-framework/etc/ophidiadb.sql
   when: new_ophidiadbs.changed
 
-- name: Copy template of ophdb-partition.sql to root
-  template:
-    src=ophdb-partition.sql.j2
+- name: Copy ophdb-partition.sql file
+  copy:
+    src=ophdb-partition.sql
     dest=/tmp/ophdb-partition.sql
     mode=0600
     owner=root
@@ -202,14 +202,14 @@
   become_user: "{{ oph_user }}"
 
 - name: Delete Ophidia default test user
-  shell: /usr/local/ophidia/oph-server/bin/oph_manage_user -a delete -u oph-test
+  shell: $(! /usr/local/ophidia/oph-server/bin/oph_manage_user -a list | grep oph-test) || /usr/local/ophidia/oph-server/bin/oph_manage_user -a delete -u oph-test
   args:
     executable: /bin/bash
   become: yes
   become_user: "{{ oph_user }}"
 
 - name: Add Ophidia specific user
-  shell: /usr/local/ophidia/oph-server/bin/oph_manage_user -a add -u {{ oph_account_user }} -p {{ oph_account_passwd }} -r yes
+  shell: if [[ $(/usr/local/ophidia/oph-server/bin/oph_manage_user -a list | grep {{ oph_account_user }}) ]] ; then /usr/local/ophidia/oph-server/bin/oph_manage_user -a update -u {{ oph_account_user }} -p {{ oph_account_passwd }}; else /usr/local/ophidia/oph-server/bin/oph_manage_user -a add -u {{ oph_account_user }} -p {{ oph_account_passwd }} -r yes; fi
   args:
     executable: /bin/bash
   become: yes
