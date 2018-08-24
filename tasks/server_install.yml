@@ -68,26 +68,26 @@
 
 - name: Download Ophidia Packages
   get_url:
-    url: "https://download.ophidia.cmcc.it/rpm/1.2/{{item}}"
+    url: "https://download.ophidia.cmcc.it/rpm/1.4/{{item}}"
     dest: /usr/local/ophidia/extra/{{item}}
     force: no
     validate_certs: no
     timeout: 1000
   with_items:
-    - ophidia-io-server-1.2.0-0.el7.centos.x86_64.rpm
+    - ophidia-io-server-1.4.0-0.el7.centos.x86_64.rpm
     - ophidia-analytics-framework-1.2.0-0.el7.centos.x86_64.rpm
-    - ophidia-server-1.2.0-0.el7.centos.x86_64.rpm
-    - ophidia-primitives-1.2.0-0.el7.centos.x86_64.rpm
-    - ophidia-terminal-1.2.0-0.el7.centos.x86_64.rpm
+    - ophidia-server-1.4.0-0.el7.centos.x86_64.rpm
+    - ophidia-primitives-1.4.0-0.el7.centos.x86_64.rpm
+    - ophidia-terminal-1.4.0-0.el7.centos.x86_64.rpm
 
 - name: Install Ophidia packages
   yum: name=/usr/local/ophidia/extra/{{item}} state=present disable_gpg_check=yes
   with_items:
-    - ophidia-primitives-1.2.0-0.el7.centos.x86_64.rpm
-    - ophidia-io-server-1.2.0-0.el7.centos.x86_64.rpm
-    - ophidia-analytics-framework-1.2.0-0.el7.centos.x86_64.rpm
-    - ophidia-server-1.2.0-0.el7.centos.x86_64.rpm
-    - ophidia-terminal-1.2.0-0.el7.centos.x86_64.rpm
+    - ophidia-primitives-1.4.0-0.el7.centos.x86_64.rpm
+    - ophidia-io-server-1.4.0-0.el7.centos.x86_64.rpm
+    - ophidia-analytics-framework-1.4.0-0.el7.centos.x86_64.rpm
+    - ophidia-server-1.4.0-0.el7.centos.x86_64.rpm
+    - ophidia-terminal-1.4.0-0.el7.centos.x86_64.rpm
 
 - name: Install PyOphidia
   pip: name=pyophidia

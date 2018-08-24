@@ -50,6 +50,14 @@
 
 #################################################
 # Tasks for general configuration
+- name: Copy template of 'oph_submit' file
+  template:
+    src=oph_submit.sh.j2
+    dest=/usr/local/ophidia/oph-server/etc/script/oph_submit.sh
+    mode=0755
+    owner={{ oph_user }}
+    group={{ oph_user }}
+
 - name: Copy template of Ophidia server server.conf
   template:
     src=server.conf.j2
@@ -258,6 +266,7 @@
   shell: pgrep oph_server || (nohup oph_server 2>&1 > /dev/null &)
   args:
     executable: /bin/bash
+    chdir: /usr/local/ophidia/oph-server/bin/
   become: yes
   become_user: "{{ oph_user }}"
 
