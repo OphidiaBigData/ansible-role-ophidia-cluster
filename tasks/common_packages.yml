@@ -59,15 +59,15 @@
 
 - name: Download libmatheval
   get_url:
-    url: "http://ftp.gnu.org/gnu/libmatheval/libmatheval-1.1.10.tar.gz"
-    dest: /usr/local/ophidia/extra/src/libmatheval-1.1.10.tar.gz
+    url: "http://ftp.gnu.org/gnu/libmatheval/libmatheval-1.1.11.tar.gz"
+    dest: /usr/local/ophidia/extra/src/libmatheval-1.1.11.tar.gz
     force: no
     timeout: 1000
   when: libmatheval.stat.exists == False
 
 - name: Extract libmatheval
   unarchive: 
-    src: /usr/local/ophidia/extra/src/libmatheval-1.1.10.tar.gz 
+    src: /usr/local/ophidia/extra/src/libmatheval-1.1.11.tar.gz 
     dest: /usr/local/ophidia/extra/src/libmatheval
     extra_opts: "--strip-components=1"
     copy: no

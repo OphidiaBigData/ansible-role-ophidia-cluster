@@ -1,1 +1,1 @@
-INSERT INTO hostpartition (partitionname) SELECT 'test' FROM DUAL WHERE NOT EXISTS (SELECT * FROM hostpartition WHERE partitionname='test') LIMIT 1;
+INSERT INTO hostpartition (partitionname) SELECT 'main' FROM DUAL WHERE NOT EXISTS (SELECT * FROM hostpartition WHERE partitionname='main') LIMIT 1;
