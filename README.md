@@ -28,7 +28,7 @@ Role Variables
 14. nfs_subnet: subnetwork for the Ophidia io-compute nodes (for NFS folder mount)
 15. mysql_subnet: subnetwork for MySQL server on the cluster nodes (for database grant)
 16. deploy_type: type of deployment ('install', 'configure' or 'complete')
-17. node_type: type of node to deploy ('server' or 'io')
+17. node_type: type of node to deploy ('server', 'io' or 'single')
 
 Dependencies
 ------------

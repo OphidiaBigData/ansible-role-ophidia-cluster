@@ -1,0 +1,130 @@
+---
+# Common installation tasks
+- include: common_packages.yml
+
+#################################################
+# Task to install cjose
+- name: Check if cjose is installed
+  stat: path=/usr/local/ophidia/extra/lib/libcjose.so
+  register: libcjose
+
+- name: Create cjose folder
+  file: path=/usr/local/ophidia/extra/src/cjose state=directory mode=0755
+  when: libcjose.stat.exists == False
+
+- name: Install cjose dependencies packages
+  yum: name={{ item }} state=latest
+  with_items:
+    - openssl-devel
+    - jansson-devel
+  when: libcjose.stat.exists == False
+
+- name: Download cjose
+  get_url:
+    url: "https://github.com/cisco/cjose/archive/0.4.1.tar.gz"
+    dest: /usr/local/ophidia/extra/src/0.4.1.tar.gz
+    force: no
+    timeout: 1000
+  when: libcjose.stat.exists == False
+
+- name: Extract cjose
+  unarchive: 
+    src: /usr/local/ophidia/extra/src/0.4.1.tar.gz 
+    dest: /usr/local/ophidia/extra/src/cjose
+    extra_opts: "--strip-components=1"
+    copy: no
+    creates: /usr/local/ophidia/extra/src/cjose/*
+  when: libcjose.stat.exists == False
+
+- name: Build cjose
+  shell:
+    cd /usr/local/ophidia/extra/src/cjose && ./configure --prefix=/usr/local/ophidia/extra > /dev/null 2>&1 && make > /dev/null 2>&1
+  args:
+    executable: /bin/bash
+    creates: /usr/local/ophidia/extra/src/cjose/src/.libs/libcjose.so
+  when: libcjose.stat.exists == False
+
+- name: Install cjose
+  shell:
+    cd /usr/local/ophidia/extra/src/cjose && make install > /dev/null 2>&1
+  args:
+    executable: /bin/bash
+    creates: /usr/local/ophidia/extra/lib/libcjose.so
+  when: libcjose.stat.exists == False
+
+#################################################
+# Tasks to install specific packages
+- name: Install 2nd set of dependencies packages
+  yum: name={{ item }} state=latest
+  with_items:
+    - httpd
+    - php
+    - gsoap
+    - mod_ssl
+
+# Download specific packages
+- name: Creates Ophidia extra directory
+  file: path=/usr/local/ophidia/extra state=directory
+
+- name: Download Ophidia Packages
+  get_url:
+    url: "https://download.ophidia.cmcc.it/rpm/1.5/{{item}}"
+    dest: /usr/local/ophidia/extra/{{item}}
+    force: no
+    validate_certs: no
+    timeout: 1000
+  with_items:
+    - ophidia-io-server-1.5.0-0.el7.centos.x86_64.rpm
+    - ophidia-analytics-framework-1.5.0-0.el7.centos.x86_64.rpm
+    - ophidia-server-1.5.0-0.el7.centos.x86_64.rpm
+    - ophidia-primitives-1.5.0-0.el7.centos.x86_64.rpm
+    - ophidia-terminal-1.5.0-0.el7.centos.x86_64.rpm
+
+- name: Install Ophidia packages
+  yum: name=/usr/local/ophidia/extra/{{item}} state=present disable_gpg_check=yes
+  with_items:
+    - ophidia-primitives-1.5.0-0.el7.centos.x86_64.rpm
+    - ophidia-io-server-1.5.0-0.el7.centos.x86_64.rpm
+    - ophidia-analytics-framework-1.5.0-0.el7.centos.x86_64.rpm
+    - ophidia-server-1.5.0-0.el7.centos.x86_64.rpm
+    - ophidia-terminal-1.5.0-0.el7.centos.x86_64.rpm
+
+- name: Install PyOphidia
+  pip: name=pyophidia
+
+#################################################
+# Tasks for user and folder creation
+- name: Copy oph-primitives/lib to /usr/lib64/mysql/plugin
+  shell: cp /usr/local/ophidia/oph-cluster/oph-primitives/lib/liboph_*.so /usr/lib64/mysql/plugin/
+  args:
+    executable: /bin/bash
+    creates: /usr/lib64/mysql/plugin/liboph_*.so
+
+- name: Create user for Ophidia server
+  user: name={{ oph_user }} shell=/bin/bash generate_ssh_key=yes ssh_key_bits=2048
+
+- name: Sudo does not require tty
+  lineinfile:
+    dest=/etc/sudoers
+    state=present
+    regexp=^requiretty
+    line='Defaults    !requiretty'
+
+#######################################################
+# Tasks to setup/config mysql and necessary databases
+- name: Change ownership mysql for /var/log/mysqld.log
+  file: path=/var/log/mysqld.log owner=mysql group=root
+
+#######################################################
+# Tasks to set permissions
+- name: Set permissions on Ophidia folders
+  file: path=/usr/local/ophidia owner={{ oph_user }} group={{ oph_user }} state=directory recurse=yes
+
+- name: Set permissions on Ophidia web space
+  file: path=/var/www/html/ophidia owner={{ oph_user }} group={{ oph_user }} state=directory recurse=yes
+
+#################################################
+# Set SELinux mode
+- name: Disable SELinux
+  selinux: state=permissive policy=targeted
+

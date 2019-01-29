@@ -13,3 +13,11 @@
 - include: io_configure.yml
   when: (deploy_type == 'complete' or deploy_type == 'configure') and node_type == 'io'
   tags: package
+
+- include: single_install.yml
+  when: (deploy_type == 'complete' or deploy_type == 'install') and node_type == 'single'
+  tags: package
+
+- include: single_configure.yml
+  when: (deploy_type == 'complete' or deploy_type == 'configure') and node_type == 'single'
+  tags: package

@@ -1,0 +1,247 @@
+#################################################
+# Tasks for general configuration
+- name: Copy template of 'oph_submit' file
+  template:
+    src=oph_submit.sh.j2
+    dest=/usr/local/ophidia/oph-server/etc/script/oph_submit.sh
+    mode=0755
+    owner={{ oph_user }}
+    group={{ oph_user }}
+
+- name: Copy template of Ophidia server server.conf
+  template:
+    src=server.conf.j2
+    dest=/usr/local/ophidia/oph-server/etc/server.conf
+    mode=0644
+    owner={{ oph_user }}
+    group={{ oph_user }}
+
+- name: Copy template of Ophidia server env.php
+  template:
+    src=env.php.j2
+    dest=/var/www/html/ophidia/env.php
+    mode=0644
+    owner={{ oph_user }}
+    group={{ oph_user }}
+
+- name: Copy template of Ophidia server ophidiadb.conf
+  template:
+    src=ophidiadb.conf.j2
+    dest=/usr/local/ophidia/oph-server/etc/ophidiadb.conf
+    mode=0644
+    owner={{ oph_user }}
+    group={{ oph_user }}
+
+- name: Copy template of Ophidia web server conf ophidia-web.conf
+  template:
+    src=ophidia-web.conf.j2
+    dest=/etc/httpd/conf.d/ophidia-web.conf
+    mode=0644
+    owner=root
+    group=root
+
+- name: Copy template of oph_configuration
+  template:
+    src=oph_configuration.j2
+    dest=/usr/local/ophidia/oph-cluster/oph-analytics-framework/etc/oph_configuration
+    mode=0644
+    owner={{ oph_user }}
+    group={{ oph_user }}
+
+- name: Copy template of oph_soap_configuration
+  template:
+    src=oph_soap_configuration.j2
+    dest=/usr/local/ophidia/oph-cluster/oph-analytics-framework/etc/oph_soap_configuration
+    mode=0644
+    owner={{ oph_user }}
+    group={{ oph_user }}
+
+# Create server certs
+- include: certs.yml
+
+#######################################################
+# Tasks to setup/config mysql and necessary databases
+- name: Start the MySQL service
+  service: name=mysql state=started enabled=yes
+
+- name: Wait for mysql start
+  wait_for: path=/var/lib/mysql/mysql.sock
+
+- name: Set mysql root passwd
+  mysql_user: name=root password={{ ophdb_passwd }} host={{ item }}
+  with_items:
+    - "{{ ansible_hostname }}"
+    - "{{ ansible_nodename }}"
+    - 127.0.0.1
+    - ::1
+    - localhost
+
+- name: Copy template of .my.cnf to root
+  template:
+    src=my.cnf.j2
+    dest=/root/.my.cnf
+    mode=0600
+    owner=root
+    group=root
+
+- name: Copy template of .my.cnf to oph_user
+  template:
+    src=my.cnf.j2
+    dest=/home/{{ oph_user }}/.my.cnf
+    mode=0600
+    owner={{ oph_user }}
+    group={{ oph_user }}
+
+- name: Import Ophidia primitives
+  mysql_db: name=mysql state=import target=/usr/local/ophidia/oph-cluster/oph-primitives/etc/create_func.sql
+
+- name: Create Ophidia databases
+  mysql_db: name={{ item }} state=present
+  with_items:
+    - ophidiadb
+    - oph_dimensions
+  register: new_ophidiadbs
+
+- name: Import Ohidia analytics db
+  mysql_db: name=ophidiadb state=import target=/usr/local/ophidia/oph-cluster/oph-analytics-framework/etc/ophidiadb.sql
+  when: new_ophidiadbs.changed
+
+- name: Copy ophdb-partition.sql file
+  copy:
+    src=ophdb-partition.sql
+    dest=/tmp/ophdb-partition.sql
+    mode=0600
+    owner=root
+    group=root
+  when: new_ophidiadbs.changed
+
+- name: Import ophdb-partition.sql
+  mysql_db: name=ophidiadb state=import target=/tmp/ophdb-partition.sql
+  when: new_ophidiadbs.changed
+
+- name: Copy template of ophdb-host-local.sql to root
+  template:
+    src=ophdb-host-local.sql.j2
+    dest=/tmp/ophdb-host.sql
+    mode=0600
+    owner=root
+    group=root
+  when: new_ophidiadbs.changed
+
+- name: Import ophdb-host.sql
+  mysql_db: name=ophidiadb state=import target=/tmp/ophdb-host.sql
+  when: new_ophidiadbs.changed
+
+- name: Grant Mysql privileges
+  mysql_user: name=root password='{{ ophdb_passwd }}' host='{{ mysql_subnet }}' priv={{ item }}
+  with_items:
+    - ophidiadb.*:ALL
+    - oph_dimensions.*:ALL
+    - mysql.*:EXECUTE
+    - db_ophidiadb_%.*:ALL
+
+#######################################################
+# Task to setup Ophidia users
+- name: Update Ophidia admin user password
+  shell: /usr/local/ophidia/oph-server/bin/oph_manage_user -a update -u admin -p {{ oph_account_passwd }}
+  args:
+    executable: /bin/bash
+  become: yes
+  become_user: "{{ oph_user }}"
+
+- name: Delete Ophidia default test user
+  shell: $(! /usr/local/ophidia/oph-server/bin/oph_manage_user -a list | grep oph-test) || /usr/local/ophidia/oph-server/bin/oph_manage_user -a delete -u oph-test
+  args:
+    executable: /bin/bash
+  become: yes
+  become_user: "{{ oph_user }}"
+
+- name: Add Ophidia specific user
+  shell: if [[ $(/usr/local/ophidia/oph-server/bin/oph_manage_user -a list | grep {{ oph_account_user }}) ]] ; then /usr/local/ophidia/oph-server/bin/oph_manage_user -a update -u {{ oph_account_user }} -p {{ oph_account_passwd }}; else /usr/local/ophidia/oph-server/bin/oph_manage_user -a add -u {{ oph_account_user }} -p {{ oph_account_passwd }} -r yes; fi
+  args:
+    executable: /bin/bash
+  become: yes
+  become_user: "{{ oph_user }}"
+
+#######################################################
+# Tasks for Ophidia web and HTTPS configuration
+- name: Check HTTP server SSL cert
+  stat: path=/etc/pki/tls/certs/ophidia-web.crt
+  register: httpserver
+
+- name: Create HTTP server SSL cert
+  command: >
+    openssl req
+      -x509
+      -nodes
+      -days 730
+      -newkey rsa:2048
+      -passout pass:{{ cert_passwd }}
+      -subj "/"
+      -keyout /etc/pki/tls/private/ophidia-web.key
+      -out /etc/pki/tls/certs/ophidia-web.crt
+  args:
+    creates: /etc/pki/tls/certs/ophidia-web.crt
+  when: httpserver.stat.exists == False
+
+- name: Set HTTPS server cert permission
+  file:
+    path: "{{ item }}"
+    mode: 0600
+  with_items:
+    - "/etc/pki/tls/private/ophidia-web.key"
+    - "/etc/pki/tls/certs/ophidia-web.crt"
+
+#######################################################
+# Tasks to start the services
+- name: Start httpd
+  shell: pgrep httpd || /usr/sbin/httpd
+
+- name: Start sshd
+  service: name=sshd state=started enabled=yes
+
+#######################################################
+# Task to start Ophidia IO service
+- name: Start ophidia IO server
+  shell: pgrep oph_io_server || (nohup oph_io_server -i 1 2>&1 > /dev/null &)
+  args:
+    executable: /bin/bash
+  become: yes
+  become_user: "{{ oph_user }}"
+
+#######################################################
+# Task to configure and start SLURM daemon
+- name: Update slurm conf
+  lineinfile:
+    dest=/etc/slurm/slurm.conf
+    state=present
+    regexp='SlurmdPidFile=\/var\/run\/slurmctld.pid'
+    line='SlurmdPidFile=\/var\/run\/slurmd.pid'
+
+- name: Update slurm conf in case of localhost
+  replace:
+    path: /etc/slurm/slurm.conf
+    regexp: 'localhost\[1-1\]'
+    replace: 'localhost'
+
+- name: Stop SLURM
+  command: scontrol shutdown
+
+- name: Start Slurm Controller
+  command: slurmctld
+
+- name: Start Slurm Daemon
+  command: slurmd
+
+- name: Reconfigure SLURM
+  command: scontrol reconfigure
+
+#######################################################
+# Task to start Ophidia service
+- name: Start ophidia server
+  shell: pgrep oph_server || (nohup oph_server 2>&1 > /dev/null &)
+  args:
+    executable: /bin/bash
+  become: yes
+  become_user: "{{ oph_user }}"
+
