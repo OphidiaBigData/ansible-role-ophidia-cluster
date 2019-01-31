@@ -32,11 +32,11 @@ FRAMEWORK_PATH=/usr/local/ophidia/oph-cluster/oph-analytics-framework
 LAUNCHER=/bin/srun
 
 # Body
-mkdir -p {{ base_path }}/.ophidia
-> {{ base_path }}/.ophidia/${serverid}${taskid}.submit.sh
-echo "#!/bin/bash" >> {{ base_path }}/.ophidia/${serverid}${taskid}.submit.sh
-echo "${FRAMEWORK_PATH}/bin/oph_analytics_framework \"${submissionstring}\"" >> {{ base_path }}/.ophidia/${serverid}${taskid}.submit.sh
-chmod +x {{ base_path }}/.ophidia/${serverid}${taskid}.submit.sh
+mkdir -p {{ user_home }}/.ophidia
+> {{ user_home }}/.ophidia/${serverid}${taskid}.submit.sh
+echo "#!/bin/bash" >> {{ user_home }}/.ophidia/${serverid}${taskid}.submit.sh
+echo "${FRAMEWORK_PATH}/bin/oph_analytics_framework \"${submissionstring}\"" >> {{ user_home }}/.ophidia/${serverid}${taskid}.submit.sh
+chmod +x {{ user_home }}/.ophidia/${serverid}${taskid}.submit.sh
 
 MPI_TYPE=--mpi=pmi2
 if [ ${ncores} -eq 1 ]
@@ -47,12 +47,12 @@ MPI_TYPE=--mpi=none
 fi
 fi
 
-${LAUNCHER} ${MPI_TYPE} --input=none -n ${ncores} -o ${log} -e ${log} -J ${fixString}${serverid}${taskid} {{ base_path }}/.ophidia/${serverid}${taskid}.submit.sh
+${LAUNCHER} ${MPI_TYPE} --input=none -n ${ncores} -o ${log} -e ${log} -J ${fixString}${serverid}${taskid} {{ user_home }}/.ophidia/${serverid}${taskid}.submit.sh
 if [ $? -ne 0 ]; then
-        echo "Unable to submit {{ base_path }}/.ophidia/${serverid}${taskid}.submit.sh"
+        echo "Unable to submit {{ user_home }}/.ophidia/${serverid}${taskid}.submit.sh"
         exit 1
 fi
 
-rm {{ base_path }}/.ophidia/${serverid}${taskid}.submit.sh
+rm {{ user_home }}/.ophidia/${serverid}${taskid}.submit.sh
 
 exit 0

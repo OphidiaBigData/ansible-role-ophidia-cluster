@@ -107,7 +107,7 @@
   file: path=/data/ophidia owner={{ oph_user }} group={{ oph_user }} state=directory
 
 - name: Create folder for data
-  file: path=/data/repository owner={{ oph_user }} group={{ oph_user }} state=directory
+  file: path={{ base_path }} owner={{ oph_user }} group={{ oph_user }} state=directory
 
 - name: Check shared folder symlink
   stat: path=/var/www/html/ophidia

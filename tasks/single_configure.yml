@@ -70,7 +70,6 @@
 - name: Set mysql root passwd
   mysql_user: name=root password={{ ophdb_passwd }} host={{ item }}
   with_items:
-    - "{{ ansible_hostname }}"
     - "{{ ansible_nodename }}"
     - 127.0.0.1
     - ::1
@@ -195,7 +194,13 @@
 #######################################################
 # Tasks to start the services
 - name: Start httpd
-  shell: pgrep httpd || /usr/sbin/httpd
+  service: name=munge state=restarted enabled=yes
+
+- name: Check httpd
+  shell: pgrep httpd && pkill httpd
+
+- name: Start httpd
+  service: name=httpd state=started enabled=yes
 
 - name: Start sshd
   service: name=sshd state=started enabled=yes
