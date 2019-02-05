@@ -191,13 +191,31 @@
     - "/etc/pki/tls/private/ophidia-web.key"
     - "/etc/pki/tls/certs/ophidia-web.crt"
 
+
+#######################################################
+# Setup environment variables
+- name: Add oph_term variables in bashrc file
+  lineinfile:
+    dest: /home/{{oph_user }}/.bashrc 
+    line: "{{ item.line }}"
+    insertafter: 'EOF' 
+    regexp: "{{ item.regexp }}"
+    state: present
+  with_items:
+    - { line: 'export OPH_SERVER_HOST="127.0.0.1"', regexp: 'export OPH_SERVER_HOST="127.0.0.1"' }
+    - { line: 'export OPH_SERVER_PORT="11732"', regexp: 'export OPH_SERVER_PORT="11732"' }
+    - { line: 'export OPH_PASSWD="abcd"', regexp: 'export OPH_PASSWD="abcd"' }
+    - { line: 'export OPH_USER="oph-test"', regexp: 'export OPH_USER="oph-test"' }
+  become: yes
+  become_user: "{{ oph_user }}"
+
 #######################################################
 # Tasks to start the services
 - name: Start httpd
   service: name=munge state=restarted enabled=yes
 
 - name: Check httpd
-  shell: pgrep httpd && pkill httpd
+  shell: (! pgrep httpd) || pkill httpd
 
 - name: Start httpd
   service: name=httpd state=started enabled=yes

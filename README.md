@@ -21,15 +21,16 @@ Role Variables
 7. io_prefix: hostname perfix of Ophidia IO nodes
 8. io_node_number: number of IO nodes considered in the cluster
 9. io_hostnames: list of hostnames of Ophidia IO nodes
-10. io_ips: list of IP addresses of Ophidia IO nodes
-11. server_hostname: Ophidia Server node hostname
-12. private_server_ip: private IP address of Ophidia Server node
-13. public_server_ip: public IP address of Ophidia Server node
-14. nfs_subnet: subnetwork for the Ophidia io-compute nodes (for NFS folder mount)
-15. mysql_subnet: subnetwork for MySQL server on the cluster nodes (for database grant)
-16. deploy_type: type of deployment ('install', 'configure' or 'complete')
-17. node_type: type of node to deploy ('server', 'io' or 'single')
-18. user_home: path of the user home directory
+10. io_cpus: number of cores for Ophidia IO nodes 
+11. io_ips: list of IP addresses of Ophidia IO nodes
+12. server_hostname: Ophidia Server node hostname
+13. private_server_ip: private IP address of Ophidia Server node
+14. public_server_ip: public IP address of Ophidia Server node
+15. nfs_subnet: subnetwork for the Ophidia io-compute nodes (for NFS folder mount)
+16. mysql_subnet: subnetwork for MySQL server on the cluster nodes (for database grant)
+17. deploy_type: type of deployment ('install', 'configure' or 'complete')
+18. node_type: type of node to deploy ('server', 'io' or 'single')
+19. user_home: path of the user home directory
 
 Dependencies
 ------------
