@@ -32,7 +32,6 @@ FRAMEWORK_PATH=/usr/local/ophidia/oph-cluster/oph-analytics-framework
 LAUNCHER=/bin/srun
 
 # Body
-mkdir -p {{ user_home }}/.ophidia
 > {{ user_home }}/.ophidia/${serverid}${taskid}.submit.sh
 echo "#!/bin/bash" >> {{ user_home }}/.ophidia/${serverid}${taskid}.submit.sh
 echo "${FRAMEWORK_PATH}/bin/oph_analytics_framework \"${submissionstring}\"" >> {{ user_home }}/.ophidia/${serverid}${taskid}.submit.sh

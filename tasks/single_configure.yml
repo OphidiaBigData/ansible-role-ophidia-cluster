@@ -56,6 +56,9 @@
     owner={{ oph_user }}
     group={{ oph_user }}
 
+- name: Create folder for execution scripts
+  file: path={{ user_home }}/.ophidia owner={{ oph_user }} group={{ oph_user }} state=directory
+
 # Create server certs
 - include: certs.yml
 

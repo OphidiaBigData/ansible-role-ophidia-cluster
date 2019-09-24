@@ -106,6 +106,9 @@
 - name: Create folder for sessions
   file: path=/data/ophidia owner={{ oph_user }} group={{ oph_user }} state=directory
 
+- name: Create folder for execution scripts
+  file: path=/data/home/{{ oph_user }}/.ophidia owner={{ oph_user }} group={{ oph_user }} state=directory
+
 - name: Create folder for data
   file: path={{ base_path }} owner={{ oph_user }} group={{ oph_user }} state=directory
 
@@ -124,6 +127,9 @@
 - name: Create symlink on Ophidia web space
   file: src=/data/ophidia dest=/var/www/html/ophidia state=link
   when: sym.stat.islnk is defined and sym.stat.islnk == False
+
+- name: Create symlink on Ophidia execution scripts
+  file: src=/data/home/{{ oph_user }}/.ophidia dest={{ user_home }}/.ophidia state=link
 
 #######################################################
 # Tasks to setup/config mysql and necessary databases
