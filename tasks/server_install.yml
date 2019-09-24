@@ -75,8 +75,8 @@
     timeout: 1000
   with_items:
     - ophidia-io-server-1.5.0-0.el7.centos.x86_64.rpm
-    - ophidia-analytics-framework-1.5.0-0.el7.centos.x86_64.rpm
-    - ophidia-server-1.5.0-0.el7.centos.x86_64.rpm
+    - ophidia-analytics-framework-1.5.1-0.el7.centos.x86_64.rpm
+    - ophidia-server-1.5.1-0.el7.centos.x86_64.rpm
     - ophidia-primitives-1.5.0-0.el7.centos.x86_64.rpm
     - ophidia-terminal-1.5.0-0.el7.centos.x86_64.rpm
 
@@ -85,8 +85,8 @@
   with_items:
     - ophidia-primitives-1.5.0-0.el7.centos.x86_64.rpm
     - ophidia-io-server-1.5.0-0.el7.centos.x86_64.rpm
-    - ophidia-analytics-framework-1.5.0-0.el7.centos.x86_64.rpm
-    - ophidia-server-1.5.0-0.el7.centos.x86_64.rpm
+    - ophidia-analytics-framework-1.5.1-0.el7.centos.x86_64.rpm
+    - ophidia-server-1.5.1-0.el7.centos.x86_64.rpm
     - ophidia-terminal-1.5.0-0.el7.centos.x86_64.rpm
 
 - name: Install PyOphidia
