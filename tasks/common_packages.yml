@@ -4,7 +4,7 @@
   yum: name=epel-release state=latest
 
 - name: Install mysql-community-release
-  yum: name=http://repo.mysql.com/mysql-community-release-el7-7.noarch.rpm state=present
+  yum: name=http://repo.mysql.com/mysql-community-release-el7-7.noarch.rpm state=present update_cache=yes
 
 #################################################
 # Tasks to install common packages
