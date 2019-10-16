@@ -131,3 +131,36 @@
 - name: Disable SELinux
   selinux: state=permissive policy=targeted
 
+################################
+# Tasks to install JupyterHub 
+###############################
+- name: Install python 3.6
+  yum: name={{ item }} state=present
+  with_items:
+    - python36
+    - python36-pip
+    - python36-devel
+    - proj
+    - proj-devel
+    - geos
+    - geos-devel
+    - nodejs
+
+- name: Install JupyterHub, notebook, numpy, matplotlib and PyOphidia
+  pip: name={{ item }} executable=pip3
+  with_items:
+    - jupyterhub==0.9.6
+    - notebook
+    - numpy
+    - matplotlib
+    - pyophidia
+    - git+https://github.com/matplotlib/basemap
+
+- name: Install configurable-http-proxy
+  npm: global=yes name=configurable-http-proxy
+
+- name: Copy jupyterhub-bash.sh file
+  copy:
+    src=jupyterhub-bash.sh
+    dest=/usr/local/ophidia/extra/jupyterhub-bash.sh
+    mode=0555

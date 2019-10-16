@@ -179,7 +179,7 @@
       -days 730
       -newkey rsa:2048
       -passout pass:{{ cert_passwd }}
-      -subj "/"
+      -subj "/CN={{ public_server_ip }} "
       -keyout /etc/pki/tls/private/ophidia-web.key
       -out /etc/pki/tls/certs/ophidia-web.crt
   args:
@@ -270,4 +270,57 @@
     executable: /bin/bash
   become: yes
   become_user: "{{ oph_user }}"
+
+#######################################################
+# Tasks for firewall
+- name: Enable ports on firewalld
+  firewalld:
+    port: "4443/tcp"
+    zone: public
+    permanent: true
+    state: enabled
+    
+- name: Start firewalld
+  service: name=firewalld state=started enabled=yes
+
+- name: Reload firewall rules
+  shell: firewall-cmd --reload
+
+#######################################################
+# Tasks to configure JupyterHub
+- name: Copy template of 'jupyterhub_config' file
+  template:
+    src=jupyterhub_config.py.j2
+    dest=/root/jupyterhub_config.py
+    mode=0700
+
+- name: Check Jupyter SSL cert
+  stat: path=/root/server.crt
+  register: jupytercert
+
+- name: Create HTTP server SSL cert
+  command: >
+    openssl req
+      -x509
+      -nodes
+      -days 730
+      -newkey rsa:2048
+      -passout pass:{{ cert_passwd }}
+      -subj "/CN={{ public_server_ip }} "
+      -keyout /root/server.key
+      -out /root/server.crt
+  args:
+    creates: /root/server.crt
+  when: jupytercert.stat.exists == False
+
+# Task to start JupyterHub service
+- name: Start JupyterHub
+  shell: pgrep jupyterhub || (nohup /usr/local/bin/jupyterhub > jupyter.log 2>&1 &)
+  args:
+    executable: /bin/bash
+    chdir: /root/
+
+# Download ECAS notebooks in user home
+- name: Download ECAS notebooks
+  git: dest=/home/{{ oph_user}}/notebooks/ repo=https://github.com/ECAS-Lab/ecas-notebooks
 

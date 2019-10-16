@@ -1,0 +1,7 @@
+c.JupyterHub.base_url = '/jupyter'
+c.JupyterHub.extra_log_file = '/root/jupyter.log'
+c.JupyterHub.port = 4443
+c.JupyterHub.ssl_cert = '/root/server.crt'
+c.JupyterHub.ssl_key = '/root/server.key'
+c.Spawner.cmd = ['/usr/local/ophidia/extra/jupyterhub-bash.sh']
+c.PAMAuthenticator.open_sessions = False
