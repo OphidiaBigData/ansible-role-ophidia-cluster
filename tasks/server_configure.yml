@@ -106,9 +106,6 @@
 
 #######################################################
 # Tasks to set data in NFS shared folder
-- name: Create folder for sessions
-  file: path=/data/ophidia owner={{ oph_user }} group={{ oph_user }} state=directory
-
 - name: Create folder for execution scripts
   file: path=/data/home/{{ oph_user }}/.ophidia owner={{ oph_user }} group={{ oph_user }} state=directory
 
@@ -120,7 +117,7 @@
   register: sym
 
 - name: Copy file from web folder
-  copy: src=/var/www/html/ophidia dest=/data
+  copy: src=/var/www/html/ophidia dest=/data owner={{ oph_user }} group={{ oph_user }} 
   when: sym.stat.islnk is defined and sym.stat.islnk == False
 
 - name: Delete web folder

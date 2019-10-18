@@ -57,9 +57,6 @@
 - name: Set permissions on Ophidia folders
   file: path=/usr/local/ophidia owner={{ oph_user }} group={{ oph_user }} state=directory recurse=yes
 
-- name: Set permissions on Ophidia web space
-  file: path=/data/ophidia owner={{ oph_user }} group={{ oph_user }} state=directory recurse=yes
-
 #################################################
 # Set SELinux mode
 - name: Disable SELinux
