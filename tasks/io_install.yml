@@ -1,64 +1,79 @@
----
-# Common installation tasks
-- include: common_packages.yml
+- stat: path=/usr/local/ophidia/oph-cluster/oph-analytics-framework/etc/oph_script_configuration
+  register: installation_completed
 
-#################################################
-# Download specific packages
-- name: Creates Ophidia extra directory
-  file: path=/usr/local/ophidia/extra state=directory
-
-- name: Download Ophidia Packages
-  get_url:
-    url: "https://download.ophidia.cmcc.it/rpm/1.5/{{item}}"
-    dest: /usr/local/ophidia/extra/{{item}}
-    force: no
-    validate_certs: no
-    timeout: 1000
-  with_items:
-    - ophidia-analytics-framework-1.5.1-0.el7.centos.x86_64.rpm
-    - ophidia-io-server-1.5.0-0.el7.centos.x86_64.rpm
-    - ophidia-primitives-1.5.0-0.el7.centos.x86_64.rpm
-
-- name: Install Ophidia packages
-  yum: name=/usr/local/ophidia/extra/{{item}} state=present disable_gpg_check=yes
-  with_items:
-    - ophidia-primitives-1.5.0-0.el7.centos.x86_64.rpm
-    - ophidia-analytics-framework-1.5.1-0.el7.centos.x86_64.rpm
-    - ophidia-io-server-1.5.0-0.el7.centos.x86_64.rpm
-
-#################################################
-# Tasks for user and folder creation
-- name: Copy oph-primitives/lib to /usr/lib64/mysql/plugin
-  shell: cp /usr/local/ophidia/oph-cluster/oph-primitives/lib/liboph_*.so /usr/lib64/mysql/plugin/
-  args:
-    executable: /bin/bash
-    creates: /usr/lib64/mysql/plugin/liboph_*.so
-
-- name: Create user for Ophidia framework
-  user: name={{ oph_user }} home={{ user_home }} shell=/bin/bash generate_ssh_key=yes ssh_key_bits=2048
-
-- name: Creates NFS shared directory
-  file: path=/data state=directory owner=root group=root
-
-- name: Sudo does not require tty
-  lineinfile:
-    dest=/etc/sudoers
-    state=present
-    regexp=^requiretty
-    line='Defaults    !requiretty'
-
-#######################################################
-# Tasks to setup/config mysql and necessary databases
-- name: Change ownership mysql for /var/log/mysqld.log
-  file: path=/var/log/mysqld.log owner=mysql group=root
-
-#######################################################
-# Tasks to set permissions
-- name: Set permissions on Ophidia folders
-  file: path=/usr/local/ophidia owner={{ oph_user }} group={{ oph_user }} state=directory recurse=yes
-
-#################################################
-# Set SELinux mode
-- name: Disable SELinux
-  selinux: state=permissive policy=targeted
-
+- block:
+ ---
+ # Common installation tasks
+ - include: common_packages.yml
+ 
+ #################################################
+ # Download specific packages
+ - name: Creates Ophidia extra directory
+   file: path=/usr/local/ophidia/extra state=directory
+ 
+ - name: Download Ophidia Packages
+   get_url:
+     url: "https://download.ophidia.cmcc.it/rpm/1.5/{{item}}"
+     dest: /usr/local/ophidia/extra/{{item}}
+     force: no
+     validate_certs: no
+     timeout: 1000
+   with_items:
+     - ophidia-analytics-framework-1.5.1-0.el7.centos.x86_64.rpm
+     - ophidia-io-server-1.5.0-0.el7.centos.x86_64.rpm
+     - ophidia-primitives-1.5.0-0.el7.centos.x86_64.rpm
+ 
+ - name: Install Ophidia packages
+   yum: name=/usr/local/ophidia/extra/{{item}} state=present disable_gpg_check=yes
+   with_items:
+     - ophidia-primitives-1.5.0-0.el7.centos.x86_64.rpm
+     - ophidia-analytics-framework-1.5.1-0.el7.centos.x86_64.rpm
+     - ophidia-io-server-1.5.0-0.el7.centos.x86_64.rpm
+ 
+ #######################################################
+ # Tasks to setup/config mysql and necessary databases
+ - name: Change ownership mysql for /var/log/mysqld.log
+   file: path=/var/log/mysqld.log owner=mysql group=root
+ 
+ #################################################
+ # Tasks for user and folder creation
+ - name: Copy oph-primitives/lib to /usr/lib64/mysql/plugin
+   shell: cp /usr/local/ophidia/oph-cluster/oph-primitives/lib/liboph_*.so /usr/lib64/mysql/plugin/
+   args:
+     executable: /bin/bash
+     creates: /usr/lib64/mysql/plugin/liboph_*.so
+ 
+ - name: Create user for Ophidia framework
+   user: name={{ oph_user }} home={{ user_home }} shell=/bin/bash generate_ssh_key=yes ssh_key_bits=2048
+ 
+ - name: Creates NFS shared directory
+   file: path=/data state=directory owner=root group=root
+ 
+ - name: Sudo does not require tty
+   lineinfile:
+     dest=/etc/sudoers
+     state=present
+     regexp=^requiretty
+     line='Defaults    !requiretty'
+ 
+ #######################################################
+ # Tasks to set permissions
+ - name: Set permissions on Ophidia folders
+   file: path=/usr/local/ophidia owner={{ oph_user }} group={{ oph_user }} state=directory recurse=yes
+ 
+ #################################################
+ # Set SELinux mode
+ - name: Disable SELinux
+   selinux: state=permissive policy=targeted
+ 
+ #################################################
+ # Task for general configuration
+ - name: Copy oph_script_configuration file
+   copy:
+     src=oph_script_configuration
+     dest=/usr/local/ophidia/oph-cluster/oph-analytics-framework/etc/oph_script_configuration
+     mode=0644
+     owner={{ oph_user }}
+     group={{ oph_user }}
+ 
+ when: force_reinstall or not installation_completed.stat.exists
