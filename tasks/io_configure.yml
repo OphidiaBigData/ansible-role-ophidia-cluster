@@ -81,6 +81,9 @@
 - name: Wait for nfs folder
   wait_for: path=/data/ophidia
 
+- name: Wait for second nfs folder
+  wait_for: path=/data/home/{{ oph_user }}/.ophidia
+
 - name: Check shared folder symlink
   stat: path=/var/www/html/ophidia
   register: sym
