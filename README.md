@@ -31,6 +31,7 @@ Role Variables
 17. deploy_type: type of deployment ('install', 'configure' or 'complete')
 18. node_type: type of node to deploy ('server', 'io' or 'single')
 19. user_home: path of the user home directory
+20. force_reinstall: flag (false or true) to define if instance should be updated when the role is executed a second time
 
 Dependencies
 ------------

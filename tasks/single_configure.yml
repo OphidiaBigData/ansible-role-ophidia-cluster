@@ -207,8 +207,8 @@
   with_items:
     - { line: 'export OPH_SERVER_HOST="127.0.0.1"', regexp: 'export OPH_SERVER_HOST="127.0.0.1"' }
     - { line: 'export OPH_SERVER_PORT="11732"', regexp: 'export OPH_SERVER_PORT="11732"' }
-    - { line: 'export OPH_PASSWD="abcd"', regexp: 'export OPH_PASSWD="abcd"' }
-    - { line: 'export OPH_USER="oph-test"', regexp: 'export OPH_USER="oph-test"' }
+    - { line: 'export OPH_PASSWD="{{ oph_account_passwd }}"', regexp: 'export OPH_PASSWD="{{ oph_account_passwd }}"' }
+    - { line: 'export OPH_USER="{{ oph_account_user }}"', regexp: 'export OPH_USER="{{ oph_account_user }}"' }
   become: yes
   become_user: "{{ oph_user }}"
 
