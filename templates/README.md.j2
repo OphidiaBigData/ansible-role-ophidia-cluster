@@ -1,0 +1,23 @@
+ECAS cluster
+=
+
+This ECAS instance provides a complete environment enabling scientific end-users to perform data analysis experiments.  
+It relies on Ophidia, a big data analytics framework for eScience, which provides declarative, server-side, and parallel data analysis, jointly with an internal storage model able to efficiently deal with multidimensional data and a hierarchical data organization to manage large data volumes (“datacubes”), and on JupyterHub, to give users access to computational environments and resources without burdening them with installation and maintenance tasks.
+
+Quick start
+------------------
+To run the Ophidia terminal
+
+```
+su - {{ oph_user }}
+oph_term
+```
+
+The JupyterHub interface is available at
+
+```
+https://{{ public_server_ip }}:4443/jupyter/
+```
+First, you need to set a password for the {{ oph_user }} user.
+Then, you can login to JupyterHub using the {{ oph_user }} credentials.
+

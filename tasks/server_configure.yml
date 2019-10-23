@@ -101,6 +101,14 @@
     owner=root
     group=root
 
+- name: Copy template of 'README' file
+  template:
+    src=README.md.j2
+    dest=/root/README.md
+    mode=0644
+    owner=root
+    group=root
+
 # Create server certs
 - include: certs.yml
 
@@ -331,4 +339,3 @@
 # Download ECAS notebooks in user home
 - name: Download ECAS notebooks
   git: dest=/home/{{ oph_user}}/notebooks/ repo=https://github.com/ECAS-Lab/ecas-notebooks
-
