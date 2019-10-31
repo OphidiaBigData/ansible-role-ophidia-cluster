@@ -216,7 +216,7 @@
 
 #######################################################
 # Task to setup Ophidia users
-- stat: path=/home/{{ oph_user}}/notebooks/ecas-notebooks
+- stat: path=/home/{{ oph_user }}/notebooks
   register: ophidia_user_created
 
 - name: Update Ophidia admin user password
