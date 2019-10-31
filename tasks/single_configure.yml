@@ -144,12 +144,17 @@
 
 #######################################################
 # Task to setup Ophidia users
+
+- stat: path=/home/{{ oph_user}}/notebooks/ecas-notebooks
+  register: ophidia_user_created
+
 - name: Update Ophidia admin user password
   shell: /usr/local/ophidia/oph-server/bin/oph_manage_user -a update -u admin -p {{ oph_account_passwd }}
   args:
     executable: /bin/bash
   become: yes
   become_user: "{{ oph_user }}"
+  when: not ophidia_user_created.stat.exists
 
 - name: Delete Ophidia default test user
   shell: $(! /usr/local/ophidia/oph-server/bin/oph_manage_user -a list | grep oph-test) || /usr/local/ophidia/oph-server/bin/oph_manage_user -a delete -u oph-test
@@ -157,6 +162,7 @@
     executable: /bin/bash
   become: yes
   become_user: "{{ oph_user }}"
+  when: not ophidia_user_created.stat.exists
 
 - name: Add Ophidia specific user
   shell: if [[ $(/usr/local/ophidia/oph-server/bin/oph_manage_user -a list | grep {{ oph_account_user }}) ]] ; then /usr/local/ophidia/oph-server/bin/oph_manage_user -a update -u {{ oph_account_user }} -p {{ oph_account_passwd }}; else /usr/local/ophidia/oph-server/bin/oph_manage_user -a add -u {{ oph_account_user }} -p {{ oph_account_passwd }} -r yes; fi
@@ -164,6 +170,7 @@
     executable: /bin/bash
   become: yes
   become_user: "{{ oph_user }}"
+  when: not ophidia_user_created.stat.exists
 
 #######################################################
 # Tasks for Ophidia web and HTTPS configuration
