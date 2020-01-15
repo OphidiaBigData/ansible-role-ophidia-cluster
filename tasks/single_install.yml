@@ -150,6 +150,7 @@
     pip: name={{ item }} executable=pip3
     with_items:
       - jupyterhub==0.9.6
+      - jupyterhub-dummyauthenticator
       - notebook
       - numpy
       - matplotlib

@@ -5,3 +5,8 @@ c.JupyterHub.ssl_cert = '/root/server.crt'
 c.JupyterHub.ssl_key = '/root/server.key'
 c.Spawner.cmd = ['/usr/local/ophidia/extra/jupyterhub-bash.sh']
 c.PAMAuthenticator.open_sessions = False
+
+from dummyauthenticator import DummyAuthenticator
+c.JupyterHub.authenticator_class = DummyAuthenticator
+c.DummyAuthenticator.password = "{{ jupyter_pwd }}"
+c.Authenticator.whitelist = {' {{ oph_user }} '}
