@@ -26,7 +26,7 @@
     state: enabled
   with_items:
     - "11732/tcp"
-    - "4443/tcp"
+    - "443/tcp"
 
 - name: Enable IPs on firewalld
   firewalld:

@@ -282,7 +282,7 @@
 # Tasks for firewall
 - name: Enable ports on firewalld
   firewalld:
-    port: "4443/tcp"
+    port: "443/tcp"
     zone: public
     permanent: true
     state: enabled
