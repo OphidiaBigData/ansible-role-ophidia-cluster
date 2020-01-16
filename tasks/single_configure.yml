@@ -314,8 +314,8 @@
 - name: Extract password from jupyter file
   vars:
      jupyter_pwd: "{{ lookup('file', '/root/jupyter_password') }}"
-  tasks:
-    - debug: msg="Password is {{ jupyter_pwd }}"
+  debug: 
+    msg: "{{ lookup('file', '/root/jupyter_password') }}"
 
 - name: Copy template of 'jupyterhub_config' file
   template:
