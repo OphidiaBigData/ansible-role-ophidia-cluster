@@ -290,6 +290,14 @@
     - "/etc/pki/tls/certs/ophidia-web.crt"
 
 #######################################################
+# Task to change httpd port from 443 to 8443
+- name: Replace 443 port to 8443
+  replace:
+    path: /etc/httpd/conf.d/ssl.conf
+    regexp: '443'
+    replace: '8443'
+
+#######################################################
 # Tasks to start the services
 - name: Start httpd
   service: name=httpd state=started enabled=yes
