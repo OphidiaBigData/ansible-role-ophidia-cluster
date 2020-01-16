@@ -309,9 +309,16 @@
 
 #######################################################
 # Tasks to configure JupyterHub
+- name: Check jupyter password file
+  stat: path=/root/jupyter_password
+  register: jupyter_file
+
 - name: Generate random password
-  shell: head /dev/urandom | tr -dc "A-Za-z0-9" | head -c 10 ; echo ''
+  shell: |
+    echo `head /dev/urandom | tr -dc "A-Za-z0-9" | head -c 10 ; echo ''` > /root/jupyter_password
+    cat /root/jupyter_password
   register: jupyter_pwd
+  when: jupyter_file.stat.exists == False
 
 - name: Copy template of 'jupyterhub_config' file
   template:
