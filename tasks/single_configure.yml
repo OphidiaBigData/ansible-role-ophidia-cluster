@@ -297,8 +297,8 @@
 # Tasks to configure JupyterHub
 
 - name: Generate random password
-  vars: 
-    jupyter_pwd: "{{ lookup('password', '/root/jupyter_password length=10') }}"   
+  shell: head /dev/urandom | tr -dc "A-Za-z0-9" | head -c 10 ; echo ''
+  register: jupyter_pwd  
 
 - name: Copy template of 'jupyterhub_config' file
   template:
