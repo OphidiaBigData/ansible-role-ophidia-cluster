@@ -1,4 +1,4 @@
 #!/bin/bash
 
 source $HOME/.bashrc
-exec jupyterhub-singleuser $@
+exec /usr/local/bin/jupyterhub-singleuser $@
