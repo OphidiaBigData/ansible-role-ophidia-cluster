@@ -303,24 +303,6 @@
 
 #######################################################
 # Tasks to configure JupyterHub
-- name: Check jupyter password file
-  stat: path=/root/jupyter_password
-  register: jupyter_file
-
-- name: Generate random password
-  shell: echo `head /dev/urandom | tr -dc "A-Za-z0-9" | head -c 10 ; echo ''` > /root/jupyter_password
-  when: jupyter_file.stat.exists == False
-
-- name: Extract password from file
-  command: cat /root/jupyter_password
-  register: jupyter_passwd
-
-- name: Store password into a variable
-  vars:
-     jupyter_pwd: "{{jupyter_passwd.stdout}}"
-  debug: 
-    msg: "{{jupyter_passwd.stdout}}"
-
 - name: Copy template of 'jupyterhub_config' file
   template:
     src=jupyterhub_config.py.j2
