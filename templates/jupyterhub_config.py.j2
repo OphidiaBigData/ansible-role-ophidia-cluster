@@ -8,5 +8,5 @@ c.PAMAuthenticator.open_sessions = False
 
 from dummyauthenticator import DummyAuthenticator
 c.JupyterHub.authenticator_class = DummyAuthenticator
-c.DummyAuthenticator.password = "testpwd"
+c.DummyAuthenticator.password = "abcd"
 c.Authenticator.whitelist = {'{{ oph_user }}'}
