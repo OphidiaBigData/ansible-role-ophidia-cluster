@@ -303,6 +303,10 @@
 
 #######################################################
 # Tasks to configure JupyterHub
+- name: Generate random password
+  set_fact: 
+    jupyter_pwd: "{{ lookup('password','/dev/null length=10 chars=ascii_letters,digits,hexdigits') }}"
+
 - name: Copy template of 'jupyterhub_config' file
   template:
     src=jupyterhub_config.py.j2
