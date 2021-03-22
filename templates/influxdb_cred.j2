@@ -1,0 +1,9 @@
+[admin]
+username: admin
+pwd: {{ influx_admin_pwd }}
+token: "{{ admin_token.stdout  }}"
+
+[ecas]
+username: ecas
+pwd: {{ influx_ecas_pwd  }}
+token: "{{ ecas_token.stdout }}"

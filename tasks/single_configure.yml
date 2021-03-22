@@ -71,7 +71,7 @@
   wait_for: path=/var/lib/mysql/mysql.sock
 
 - name: Set mysql root passwd
-  mysql_user: name=root password={{ ophdb_passwd }} host={{ item }}
+  mysql_user: name=root password={{ ophdb_passwd }} host={{ item }} check_implicit_admin=yes login_user=root login_password={{ ophdb_passwd }}
   with_items:
     - "{{ ansible_nodename }}"
     - 127.0.0.1
@@ -221,11 +221,17 @@
 
 #######################################################
 # Task to change httpd port from 443 to 8443
-- name: Replace 443 port to 8443
+- name: Replace 443 port to 8443 (1)
   replace:
     path: /etc/httpd/conf.d/ssl.conf
-    regexp: '443'
-    replace: '8443'
+    regexp: 'Listen 443 https'
+    replace: 'Listen 8443 https'
+
+- name: Replace 443 port to 8443 (2)
+  replace:
+    path: /etc/httpd/conf.d/ssl.conf
+    regexp: '<VirtualHost _default_:443>'
+    replace: '<VirtualHost _default_:8443>'
 
 #######################################################
 # Tasks to start the services
@@ -280,9 +286,10 @@
 #######################################################
 # Task to start Ophidia service
 - name: Start ophidia server
-  shell: pgrep oph_server || (nohup oph_server 2>&1 > /dev/null &)
+  shell: pgrep oph_server || (nohup oph_server -s /usr/local/ophidia/oph-server/log/monitor.log 2>&1 > /dev/null &)
   args:
     executable: /bin/bash
+    chdir: /usr/local/ophidia/oph-server/bin/
   become: yes
   become_user: "{{ oph_user }}"
 
@@ -338,6 +345,20 @@
   args:
     executable: /bin/bash
     chdir: /root/
+
+- name: Download tasmin
+  get_url:
+    url: "http://esgf-node.cmcc.it/thredds/fileServer/esg_dataroot/cmip5/output1/CMCC/CMCC-CESM/rcp85/day/atmos/day/r1i1p1/v20170725/tasmin/tasmin_day_CMCC-CESM_rcp85_r1i1p1_20960101-21001231.nc"
+    dest: /data/tasmin_day_CMCC-CESM_rcp85_r1i1p1_20960101-21001231.nc
+    force: no
+    timeout: 1000
+
+- name: Download tasmax
+  get_url:
+    url: "http://esgf-node.cmcc.it/thredds/fileServer/esg_dataroot/cmip5/output1/CMCC/CMCC-CESM/rcp85/day/atmos/day/r1i1p1/v20170725/tasmax/tasmax_day_CMCC-CESM_rcp85_r1i1p1_20960101-21001231.nc"
+    dest: /data/tasmax_day_CMCC-CESM_rcp85_r1i1p1_20960101-21001231.nc
+    force: no
+    timeout: 1000
 
 # Download ECAS notebooks in user home
 - name: Download ECAS notebooks

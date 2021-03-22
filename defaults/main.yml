@@ -4,7 +4,7 @@ ophdb_passwd: 'abcd'
 oph_user: 'ophuser'
 oph_account_user: 'oph-test'
 oph_account_passwd: 'abcd'
-base_path: '/data/repository'
+base_path: '/'
 user_home: '/home/ophuser'
 io_prefix: 'oph-io'
 io_node_number: 3
@@ -19,4 +19,4 @@ deploy_type: 'complete'
 node_type: 'server'
 aaa_endpoint: '127.0.0.1'
 io_cpus: 1
-force_reinstall: false
+force_reinstall: true

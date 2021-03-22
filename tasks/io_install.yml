@@ -12,22 +12,22 @@
   
   - name: Download Ophidia Packages
     get_url:
-      url: "https://download.ophidia.cmcc.it/rpm/1.5/{{item}}"
+      url: "https://download.ophidia.cmcc.it/rpm/1.6/{{item}}"
       dest: /usr/local/ophidia/extra/{{item}}
       force: no
       validate_certs: no
       timeout: 1000
     with_items:
-      - ophidia-analytics-framework-1.5.1-0.el7.centos.x86_64.rpm
-      - ophidia-io-server-1.5.0-0.el7.centos.x86_64.rpm
-      - ophidia-primitives-1.5.0-0.el7.centos.x86_64.rpm
+      - ophidia-analytics-framework-1.6.0-0.el7.centos.x86_64.rpm
+      - ophidia-io-server-1.6.0-0.el7.centos.x86_64.rpm
+      - ophidia-primitives-1.6.0-0.el7.centos.x86_64.rpm
   
   - name: Install Ophidia packages
     yum: name=/usr/local/ophidia/extra/{{item}} state=present disable_gpg_check=yes
     with_items:
-      - ophidia-primitives-1.5.0-0.el7.centos.x86_64.rpm
-      - ophidia-analytics-framework-1.5.1-0.el7.centos.x86_64.rpm
-      - ophidia-io-server-1.5.0-0.el7.centos.x86_64.rpm
+      - ophidia-primitives-1.6.0-0.el7.centos.x86_64.rpm
+      - ophidia-analytics-framework-1.6.0-0.el7.centos.x86_64.rpm
+      - ophidia-io-server-1.6.0-0.el7.centos.x86_64.rpm
   
   #######################################################
   # Tasks to setup/config mysql and necessary databases
@@ -74,5 +74,107 @@
       mode=0644
       owner={{ oph_user }}
       group={{ oph_user }}
-  
+
+  ########################################
+  # Tasks to install Onedata
+  ########################################
+
+  - name: Check Onedata 
+    stat: path=/opt/oneclient/bin/oneclient
+    register: oneclient_flag
+
+  - name: Install Onedata
+    shell: curl -sS  http://get.onedata.org/oneclient.sh | bash
+    when: not oneclient_flag.stat.exists
+
+  - name: Check template oneclient.env
+    stat: path=/etc/oneclient.env
+    register: oneclient_env
+
+  - name: Copy template of oneclient.env
+    template:
+      src=oneclient.env.j2
+      dest=/etc/oneclient.env
+    when: not oneclient_env.stat.exists
+
+  - name: Check template oneclient.service
+    stat: path=/etc/systemd/system/oneclient.service
+    register: oneclient_service
+
+  - name: Copy template of oneclient.service
+    template:
+      src=oneclient.service.j2
+      dest=/etc/systemd/system/oneclient.service
+    when: not oneclient_service.stat.exists
+ 
+  - name: Start Oneclient
+    service: name=oneclient.service state=started enabled=yes
+
+  ########################################
+  # GRAFANA-INFLUXDB
+  ########################################
+
+  - name: Wait for /data/.utils file
+    wait_for: path=/data/.utils
+
+  - name: Read influxdb token
+    shell: sed -n '2p' /data/.utils
+    register: admin_token
+
+  - name: Read grafana pwd
+    shell: sed -n '3p' /data/.utils
+    register: grafana_pwd
+
+  - name: Read dashboard uid
+    shell: sed -n '4p' /data/.utils
+    register: dashboard_uid
+
+  - name: Test if dashboard has already imported in Grafana
+    uri:
+      url: "http://{{ private_server_ip }}:3000/api/dashboards/uid/{{ dashboard_uid.stdout }}"
+      method: GET
+      return_content: yes
+      url_username: "admin"
+      url_password: "{{ grafana_pwd.stdout }}"
+      force_basic_auth: "yes"
+      headers:
+        Content-Type: "application/json"
+    ignore_errors: true
+    register: dashboard_content
+    until: dashboard_content.content != ""
+    retries: 15
+    delay: 10
+
+  - name: Install bc
+    yum: name=bc state=latest
+
+  - name: Create monitoring folder
+    file: path=/home/{{ oph_user }}/monitoring state=directory mode=0755
+    become: yes
+    become_user: "{{ oph_user }}"
+
+  - name: Check template infrastructure_monitor_user.sh
+    stat: path=/home/{{ oph_user }}/monitoring/infrastructure_monitor_user.sh
+    register: infrastructure_script
+
+  - name: Copy template of infrastructure_monitor_user
+    ansible.builtin.template:
+      src: infrastructure_monitor_user.sh.j2
+      dest: /home/{{ oph_user }}/monitoring/infrastructure_monitor_user.sh
+      mode: 0755
+    when: not infrastructure_script.stat.exists
+    become: yes
+    become_user: "{{ oph_user }}"
+
+  - name: Check script infrastructure_monitor_user.sh
+    shell: ps -ef | grep infrastructure_monitor_user.sh | grep -v grep
+    register: script_infrastructure_running
+    ignore_errors: true
+
+  - name: Run infrastructure_monitor_user.sh
+    shell: nohup /home/{{ oph_user }}/monitoring/infrastructure_monitor_user.sh -t {{ ansible_hostname }} -f /home/{{ oph_user }}/monitoring -u {{ oph_user }} &
+    when: script_infrastructure_running.stdout == ""
+    become: yes
+    become_user: "{{ oph_user }}"
+
   when: force_reinstall or not installation_completed.stat.exists

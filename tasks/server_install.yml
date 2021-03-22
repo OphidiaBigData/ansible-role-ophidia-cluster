@@ -40,16 +40,14 @@
     when: libcjose.stat.exists == False
   
   - name: Build cjose
-    shell:
-      cd /usr/local/ophidia/extra/src/cjose && ./configure --prefix=/usr/local/ophidia/extra > /dev/null 2>&1 && make > /dev/null 2>&1
+    shell: cd /usr/local/ophidia/extra/src/cjose && ./configure --prefix=/usr/local/ophidia/extra > /dev/null 2>&1 && make > /dev/null 2>&1
     args:
       executable: /bin/bash
       creates: /usr/local/ophidia/extra/src/cjose/src/.libs/libcjose.so
     when: libcjose.stat.exists == False
   
   - name: Install cjose
-    shell:
-      cd /usr/local/ophidia/extra/src/cjose && make install > /dev/null 2>&1
+    shell: cd /usr/local/ophidia/extra/src/cjose && make install > /dev/null 2>&1
     args:
       executable: /bin/bash
       creates: /usr/local/ophidia/extra/lib/libcjose.so
@@ -64,6 +62,7 @@
       - php
       - gsoap
       - mod_ssl
+      - bc
   
   # Download specific packages
   - name: Creates Ophidia extra directory
@@ -71,26 +70,26 @@
   
   - name: Download Ophidia Packages
     get_url:
-      url: "https://download.ophidia.cmcc.it/rpm/1.5/{{item}}"
+      url: "https://download.ophidia.cmcc.it/rpm/1.6/{{item}}"
       dest: /usr/local/ophidia/extra/{{item}}
       force: no
       validate_certs: no
       timeout: 1000
     with_items:
-      - ophidia-io-server-1.5.0-0.el7.centos.x86_64.rpm
-      - ophidia-analytics-framework-1.5.1-0.el7.centos.x86_64.rpm
-      - ophidia-server-1.5.1-0.el7.centos.x86_64.rpm
-      - ophidia-primitives-1.5.0-0.el7.centos.x86_64.rpm
-      - ophidia-terminal-1.5.0-0.el7.centos.x86_64.rpm
+      - ophidia-io-server-1.6.0-0.el7.centos.x86_64.rpm
+      - ophidia-analytics-framework-1.6.0-0.el7.centos.x86_64.rpm
+      - ophidia-server-1.6.1-0.el7.centos.x86_64.rpm
+      - ophidia-primitives-1.6.0-0.el7.centos.x86_64.rpm
+      - ophidia-terminal-1.6.0-0.el7.centos.x86_64.rpm
   
-  - name: Install Ophidia packages
+  - name: Install  packages
     yum: name=/usr/local/ophidia/extra/{{item}} state=present disable_gpg_check=yes
     with_items:
-      - ophidia-primitives-1.5.0-0.el7.centos.x86_64.rpm
-      - ophidia-io-server-1.5.0-0.el7.centos.x86_64.rpm
-      - ophidia-analytics-framework-1.5.1-0.el7.centos.x86_64.rpm
-      - ophidia-server-1.5.1-0.el7.centos.x86_64.rpm
-      - ophidia-terminal-1.5.0-0.el7.centos.x86_64.rpm
+      - ophidia-primitives-1.6.0-0.el7.centos.x86_64.rpm
+      - ophidia-io-server-1.6.0-0.el7.centos.x86_64.rpm
+      - ophidia-analytics-framework-1.6.0-0.el7.centos.x86_64.rpm
+      - ophidia-server-1.6.1-0.el7.centos.x86_64.rpm
+      - ophidia-terminal-1.6.0-0.el7.centos.x86_64.rpm
   
   - name: Install PyOphidia
     pip: name=pyophidia
@@ -105,9 +104,6 @@
   
   - name: Create user for Ophidia server
     user: name={{ oph_user }} home={{ user_home }} shell=/bin/bash generate_ssh_key=yes ssh_key_bits=2048
-  
-  - name: Creates NFS shared directory
-    file: path=/data state=directory owner=root group=root
   
   - name: Sudo does not require tty
     lineinfile:
@@ -127,7 +123,7 @@
     file: path=/usr/local/ophidia owner={{ oph_user }} group={{ oph_user }} state=directory recurse=yes
   
   - name: Set permissions on Ophidia web space
-    file: path=/data/ophidia owner={{ oph_user }} group={{ oph_user }} state=directory recurse=yes
+    file: path=/var/www/html/ophidia owner={{ oph_user }} group={{ oph_user }} state=directory recurse=yes
   
   #################################################
   # Set SELinux mode
@@ -143,11 +139,12 @@
       - python36
       - python36-pip
       - python36-devel
-      - proj
-      - proj-devel
       - geos
       - geos-devel
       - nodejs
+      - libtiff-devel
+      - libsqlite3x
+      - libsqlite3x-devel
   
   - name: Install JupyterHub, notebook, numpy, matplotlib and PyOphidia
     pip: name={{ item }} executable=pip3
@@ -158,15 +155,439 @@
       - numpy
       - matplotlib
       - pyophidia
-      - git+https://github.com/matplotlib/basemap
+      - scipy
   
   - name: Install configurable-http-proxy
     npm: global=yes name=configurable-http-proxy
-  
+ 
   - name: Copy jupyterhub-bash.sh file
     copy:
-      src=jupyterhub-bash.sh
-      dest=/usr/local/ophidia/extra/jupyterhub-bash.sh
-      mode=0555
+      src: jupyterhub-bash.sh
+      dest: /usr/local/ophidia/extra/jupyterhub-bash.sh
+      mode: 0555
+
+  ########################################
+  # Tasks to install proj
+  ########################################
+  - name: Check if proj is installed
+    stat: path=/usr/local/lib/libproj.so
+    register: libproj
+  
+  - name: Create proj folder
+    file: path=/home/{{ oph_user }}/proj state=directory mode=0755
+    when: libproj.stat.exists == False
+ 
+  - name: Download proj
+    get_url:
+      url: "https://download.osgeo.org/proj/proj-6.0.0.tar.gz"
+      dest: /home/{{ oph_user }}/proj/proj-6.0.0.tar.gz
+      force: no
+      timeout: 1000
+    when: libproj.stat.exists == False
+
+  - name: Extract proj
+    unarchive:
+      src: /home/{{ oph_user }}/proj/proj-6.0.0.tar.gz
+      dest: /home/{{ oph_user }}/proj
+      copy: no
+      creates: /home/{{ oph_user }}/proj/proj-6.0.0/*
+    when: libproj.stat.exists == False
+
+  - name: Install proj
+    shell: ./configure && make && make install    
+    args:
+      chdir: /home/{{ oph_user }}/proj/proj-6.0.0
+    when: libproj.stat.exists == False
+
+  - name: Install shapely
+    pip: 
+      name: shapely 
+      executable: pip3
+      extra_args: --no-binary
+
+  - name: Install cartopy
+    pip:
+      name: cartopy
+      executable: pip3 
+
+  - name: Delete proj folder
+    file:
+      path: /home/{{ oph_user }}/proj
+      state: absent
+
+  - name: Check Onedata 
+    stat: path=/opt/oneclient/bin/oneclient
+    register: oneclient_flag
+
+  - name: Install Onedata
+    shell: curl -sS  http://get.onedata.org/oneclient.sh | bash
+    when: not oneclient_flag.stat.exists
+
+  - name: Check template oneclient.env
+    stat: path=/etc/oneclient.env
+    register: oneclient_env
+
+  - name: Copy template of oneclient.env
+    template:
+      src=oneclient.env.j2
+      dest=/etc/oneclient.env
+    when: not oneclient_env.stat.exists
+
+  - name: Check template oneclient.service
+    stat: path=/etc/systemd/system/oneclient.service
+    register: oneclient_service
+
+  - name: Copy template of oneclient.service
+    template:
+      src=oneclient.service.j2
+      dest=/etc/systemd/system/oneclient.service
+    when: not oneclient_service.stat.exists
+ 
+  - name: Start Oneclient
+    service: name=oneclient.service state=started enabled=yes
+    
+  - name: Add LD_LIBRARY_PATH and PATH in bashrc file for user
+    lineinfile:
+      dest: /home/{{ oph_user }}/.bashrc
+      line: "{{ item.line }}"
+      insertafter: 'EOF'
+      regexp: "{{ item.regexp }}"
+      state: present
+    with_items:
+      - { line: 'export LD_LIBRARY_PATH=/lib:/usr/lib:/usr/local/lib:$LD_LIBRARY_PATH', regexp: 'export LD_LIBRARY_PATH=/lib:/usr/lib:/usr/local/lib:$LD_LIBRARY_PATH' }
+      - { line: 'export PATH=$PATH:$HOME/bin:/usr/local/bin', regexp: 'export PATH=$PATH:$HOME/bin:/usr/local/bin' }
+    become: yes
+    become_user: "{{ oph_user }}"
+
+  - name: Add LD_LIBRARY_PATH and PATH in bashrc file for user
+    lineinfile:
+      dest: /root/.bashrc
+      line: "{{ item.line }}"
+      insertafter: 'EOF'
+      regexp: "{{ item.regexp }}"
+      state: present
+    with_items:
+      - { line: 'export LD_LIBRARY_PATH=/lib:/usr/lib:/usr/local/lib:$LD_LIBRARY_PATH', regexp: 'export LD_LIBRARY_PATH=/lib:/usr/lib:/usr/local/lib:$LD_LIBRARY_PATH' }
+      - { line: 'export PATH=$PATH:$HOME/bin:/usr/local/bin', regexp: 'export PATH=$PATH:$HOME/bin:/usr/local/bin' }
+
+  ########################################
+  # GRAFANA-INFLUXDB
+  ########################################
+
+  - name: Check Grafana
+    stat: path=/usr/sbin/grafana-cli
+    register: grafana_installed
+ 
+  - name: Download Grafana and Influxdb packages
+    get_url:
+      url: "https://dl.grafana.com/oss/release/grafana-7.3.7-1.x86_64.rpm"
+      dest: /home/{{ oph_user }}
+      force: no
+      validate_certs: no
+      timeout: 1000
+    when: not grafana_installed.stat.exists 
+
+  - name: Install Grafana and Influxdb
+    yum: name={{item}} state=present disable_gpg_check=yes
+    with_items:
+      - initscripts
+      - urw-fonts
+      - /home/{{ oph_user }}/grafana-7.3.7-1.x86_64.rpm
+    when: not grafana_installed.stat.exists
+
+  - name: Check Influxdb
+    stat: path=/usr/bin/influxd
+    register: influxdb_installed
+
+  - name: Download Influxdb package
+    get_url:
+      url: "https://dl.influxdata.com/influxdb/releases/influxdb2-2.0.3.x86_64.rpm" 
+      dest: /home/{{ oph_user }}
+      force: no
+      validate_certs: no
+      timeout: 1000
+    when: not influxdb_installed.stat.exists
+
+  - name: Install Influxdb
+    yum: name=/home/{{ oph_user }}/influxdb2-2.0.3.x86_64.rpm state=present disable_gpg_check=yes
+    when: not influxdb_installed.stat.exists
+
+  - name: Enable ports on firewalld
+    firewalld:
+      port: "3000/tcp"
+      zone: public
+      permanent: true
+      state: enabled
+ 
+  - name: Start Grafana service
+    service: name=grafana-server state=started enabled=yes
+
+  - name: Start Influxdb service
+    service:
+      name: influxdb
+      state: started
+      enabled: yes
+    register: influxdb_details
+    until: influxdb_details.status.ActiveState == "active"
+    retries: 15
+    delay: 10
+
+  - name: Delete packages
+    file:
+      path: /home/{{ oph_user }}/{{ item }}
+      state: absent
+    with_items:
+      - grafana-7.3.7-1.x86_64.rpm
+      - influxdb2-2.0.3.x86_64.rpm 
+
+  - name: Generate random pwd for Influxdb ADMIN user
+    set_fact:
+      influx_admin_pwd: "{{ lookup('password','/dev/null length=10 chars=ascii_letters,digits,hexdigits') }}"
+    when: not influxdb_installed.stat.exists
+    
+  - name: Setup Influxdb
+    shell: influx setup --org ECAS --bucket default --username admin --password {{ influx_admin_pwd }} --force  
+    when: not influxdb_installed.stat.exists 
+    ignore_errors: yes
+
+  - name: Generate random pwd for Influxdb ECAS user
+    set_fact:
+      influx_ecas_pwd: "{{ lookup('password','/dev/null length=10 chars=ascii_letters,digits,hexdigits') }}"
+
+  - name: Create Influxdb ECAS user
+    shell: influx user create -n ecas -p {{ influx_ecas_pwd  }} -o ECAS
+    ignore_errors: yes
+
+  - name: Create new bucket
+    shell: influx bucket create -n monitor_db -o ECAS
+    ignore_errors: yes
+
+  - name: Get bucket id
+    shell: influx bucket list | grep monitor_db | awk '{print $1}'
+    register: bucket_id
+    ignore_errors: true
+
+  - name: Check token for ecas user
+    shell: influx auth list | grep ecas
+    register: ecas_token_flag
+    ignore_errors: true
+
+  - name: Create token for ecas user
+    shell: influx auth create --user ecas --org ECAS --read-buckets {{ bucket_id.stdout }}  --write-buckets {{ bucket_id.stdout }}
+    ignore_errors: yes
+    when: ecas_token_flag.stdout == ""
+
+  - name: Get admin token
+    shell: influx auth list | grep admin | awk '{print $4}'
+    register: admin_token
+    ignore_errors: true
+
+  - name: Get ecas token
+    shell: influx auth list | grep ecas | awk '{print $2}'
+    register: ecas_token
+    ignore_errors: true
+
+  - name: Store pwd and token 
+    template:
+      src=influxdb_cred.j2
+      dest=/root/.influxdbv2/influxdb_cred
+    when: ecas_token_flag.stdout == ""
+
+  - name: Check bucket/db mapping
+    shell: influx v1 dbrp list --org ECAS --token {{ admin_token.stdout  }} | grep monitor_db
+    register: mapping_flag
+    ignore_errors: true
+
+  - name: Add bucket/db mapping
+    shell: influx v1 dbrp create --org ECAS --token {{ admin_token.stdout  }} --db monitor_db --rp autogen --bucket-id {{ bucket_id.stdout }} --default
+    when: mapping_flag.stdout == ""
+    
+  - name: Check Grafana admin pwd
+    stat: path=/root/.grafana_pwd
+    register: grafana_reset
+
+  - name: Generate random pwd for Grafana ADMIN user
+    set_fact:
+      grafana_admin_pwd: "{{ lookup('password','/dev/null length=10 chars=ascii_letters,digits,hexdigits') }}"
+    when: not grafana_reset.stat.exists  
+
+  - name: Get Grafana ADMIN user (A)
+    shell: cat /root/.grafana_pwd
+    register: grafana_pwd
+    when: grafana_reset.stat.exists
+    
+  - name: Get Grafana ADMIN user (B)
+    set_fact:
+      grafana_admin_pwd: "{{ grafana_pwd.stdout }}"
+    when: grafana_reset.stat.exists
+ 
+  - name: Set pwd for Grafana admin user
+    shell: grafana-cli admin reset-admin-password {{ grafana_admin_pwd }}
+    when: not grafana_reset.stat.exists
+ 
+  - name: Store Grafana pwd 
+    copy: content="{{ grafana_admin_pwd }}" dest=/root/.grafana_pwd
+    when: not grafana_reset.stat.exists
+
+  - name: Install grafana plugin
+    shell: grafana-cli plugins install "{{item}}"
+    with_items:
+      - vonage-status-panel
+      - corpglory-progresslist-panel
+      - yesoreyeram-boomtable-panel
+      - briangann-gauge-panel
+      - marcusolsson-hourly-heatmap-panel
+      - grafana-piechart-panel 
+
+  - name: Restart Grafana service
+    service: name=grafana-server state=restarted enabled=yes
+
+  - name: Import first data source in Grafana
+    uri:
+      url: "http://localhost:3000/api/datasources"
+      method: POST
+      body: '{"name":"InfluxDB-1","type":"influxdb","access":"proxy","url":"http://localhost:8086","securejsonData":{"token":"{{ admin_token.stdout  }}"},"jsonData":{"version":"Flux","organization":"ECAS","defaultBucket":"monitor_db","tlsSkipVerify":"true"}}'
+      body_format: json
+      url_username: "admin"
+      url_password: "{{ grafana_admin_pwd }}"
+      force_basic_auth: "yes"
+      headers:
+        Content-Type: "application/json"
+    ignore_errors: true
+
+  - name: Import second data source in Grafana
+    uri:
+      url: "http://localhost:3000/api/datasources"
+      method: POST
+      body: '{"name":"InfluxDB-2","type":"influxdb","access":"proxy","url":"http://localhost:8086","database":"monitor_db","securejsonData":{"httpHeaderValue1":"Token {{ admin_token.stdout }}"},"jsonData":{"httpMode":"GET","httpHeaderName1":"Authorization"}}'
+      body_format: json
+      url_username: "admin"
+      url_password: "{{ grafana_admin_pwd }}"
+      force_basic_auth: "yes"
+      headers:
+        Content-Type: "application/json"
+    ignore_errors: true
+
+  - name: Create monitoring folder
+    file: path=/home/{{ oph_user }}/monitoring state=directory mode=0755
+    become: yes
+    become_user: "{{ oph_user }}" 
+
+  - name: Check template infrastructure_monitor_user.sh
+    stat: path=/home/{{ oph_user }}/monitoring/infrastructure_monitor_user.sh
+    register: infrastructure_script
+
+  - name: Copy template of infrastructure_monitor_user
+    ansible.builtin.template:
+      src: infrastructure_monitor_user.sh.j2
+      dest: /home/{{ oph_user }}/monitoring/infrastructure_monitor_user.sh
+      mode: 0755
+    when: not infrastructure_script.stat.exists
+    become: yes
+    become_user: "{{ oph_user }}" 
+
+  - name: Check template server_monitor.sh
+    stat: path=/home/{{ oph_user }}/monitoring/server_monitor.sh
+    register: application_script
+
+  - name: Copy template of server_monitor
+    ansible.builtin.template:
+      src: server_monitor.sh.j2
+      dest: /home/{{ oph_user }}/monitoring/server_monitor.sh
+      mode: 0755
+    when: not application_script.stat.exists
+    become: yes
+    become_user: "{{ oph_user }}" 
+
+  - name: Check template Infrastructure_Metrics.json
+    stat: path=/home/{{ oph_user }}/Infrastructure_Metrics.json
+    register: infrastructure_dashboard
+
+  - name: Copy template of Infrastructure_Metrics.json
+    ansible.builtin.template:
+      src: Infrastructure_Metrics.json.j2
+      dest: /home/{{ oph_user }}/Infrastructure_Metrics.json
+      mode: 0755
+    when: not infrastructure_dashboard.stat.exists
+
+  - name: Check template Application_Metrics.json
+    stat: path=/home/{{ oph_user }}/Application_Metrics.json
+    register: application_dashboard
+
+  - name: Copy template of Application_Metrics.json
+    ansible.builtin.template:
+      src: Application_Metrics.json.j2
+      dest: /home/{{ oph_user }}/Application_Metrics.json
+      mode: 0755
+    when: not application_dashboard.stat.exists
+
+  - name: Import Infrastructure Dashboard in Grafana
+    uri:
+      url: "http://localhost:3000/api/dashboards/db"
+      method: POST
+      body: "{{ lookup('file','/home/{{ oph_user }}/Infrastructure_Metrics.json') }}"
+      body_format: json
+      url_username: "admin"
+      url_password: "{{ grafana_admin_pwd }}"
+      force_basic_auth: "yes"
+      headers:
+        Content-Type: "application/json"
+    ignore_errors: true
+
+  - name: Import Application Dashboard in Grafana
+    uri:
+      url: "http://localhost:3000/api/dashboards/db"
+      method: POST
+      body: "{{ lookup('file','/home/{{ oph_user }}/Application_Metrics.json') }}"
+      body_format: json
+      url_username: "admin"
+      url_password: "{{ grafana_admin_pwd }}"
+      force_basic_auth: "yes"
+      headers:
+        Content-Type: "application/json"
+    ignore_errors: true
+
+  - name: Delete Infrastructure_Metrics.json file
+    file:
+      path: /home/{{ oph_user }}/Infrastructure_Metrics.json
+      state: absent
+
+  - name: Delete Application_Metrics.json file
+    file:
+      path: /home/{{ oph_user }}/Application_Metrics.json
+      state: absent
+
+  - name: Check script infrastructure_monitor_user.sh
+    shell: ps -ef | grep infrastructure_monitor_user.sh | grep -v grep
+    register: script_infrastructure_running
+    ignore_errors: true
+
+  - name: Run infrastructure_monitor_user.sh
+    shell: nohup /home/{{ oph_user }}/monitoring/infrastructure_monitor_user.sh -t {{ server_hostname }} -f /home/{{ oph_user }}/monitoring -u {{ oph_user }} &
+    when: script_infrastructure_running.stdout == ""
+    become: yes
+    become_user: "{{ oph_user }}" 
+
+  - name: Check script server_monitor.sh
+    shell: ps -ef | grep server_monitor.sh | grep -v grep
+    register: script_application_running
+    ignore_errors: true
+
+  - name: Run server_monitor.sh
+    shell: nohup /home/{{ oph_user }}/monitoring/server_monitor.sh > /dev/null &
+    when: script_application_running.stdout == ""
+    become: yes
+    become_user: "{{ oph_user }}" 
+
+  - name: Insert grafana-influxdb shared info in /data/.utils
+    blockinfile:
+      path: /data/.utils
+      create: yes
+      block: |
+        {{ admin_token.stdout  }}
+        {{ grafana_admin_pwd }}
+        ZGGviBLGz
+      mode: '600'
+    when: not grafana_reset.stat.exists
 
   when: force_reinstall or not installation_completed.stat.exists

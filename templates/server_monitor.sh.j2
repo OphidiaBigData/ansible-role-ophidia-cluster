@@ -1,0 +1,11 @@
+#!/bin/bash
+
+FILE_LOG=/usr/local/ophidia/oph-server/log/monitor.log
+
+while true
+do
+        curl -i -XPOST 'http://{{ private_server_ip }}:8086/api/v2/write?org=ECAS&bucket=monitor_db' --header 'Authorization: Token {{ admin_token.stdout  }}' --header 'Content-Type: text/plain; charset=utf-8' --data-binary @$FILE_LOG
+        #rm $FILE_LOG
+        sleep 2
+done
+

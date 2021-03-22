@@ -1,0 +1,18 @@
+[Unit]
+Description = Oneclient service
+After       = network.target
+
+[Service]
+EnvironmentFile=/etc/oneclient.env
+# Create Oneclient mountpoint if necessary
+ExecStartPre=/bin/mkdir -p $ONECLIENT_MOUNT
+# Start Oneclient
+ExecStart=/opt/oneclient/bin/oneclient -i -o allow_other $ONECLIENT_MOUNT
+# Unmount oneclient when stopping the service
+ExecStop      = /bin/fusermount -uz $ONECLIENT_MOUNT
+# Change to `always` to automatically restart Oneclient
+Restart       = no
+Type          = forking
+
+[Install]
+WantedBy    = multi-user.target	

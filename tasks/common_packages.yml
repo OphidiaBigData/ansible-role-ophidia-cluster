@@ -4,7 +4,7 @@
   yum: name=epel-release state=latest
 
 - name: Install mysql-community-release
-  yum: name=http://repo.mysql.com/mysql-community-release-el7-7.noarch.rpm state=present update_cache=yes
+  yum: name=http://repo.mysql.com/mysql57-community-release-el7.rpm state=present update_cache=yes
 
 #################################################
 # Tasks to install common packages
@@ -15,10 +15,8 @@
     - "@development tools"
     - libssh2
     - libtool-ltdl
-    - libtool-ltdl-devel
     - mpich
     - mpich-autoload
-    - mysql-community-devel
     - mysql-community-server
     - MySQL-python
     - python

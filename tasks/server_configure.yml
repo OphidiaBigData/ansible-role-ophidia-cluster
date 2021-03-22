@@ -140,15 +140,33 @@
   file: src=/data/home/{{ oph_user }}/.ophidia dest={{ user_home }}/.ophidia state=link
 
 #######################################################
-# Tasks to setup/config mysql and necessary databases
+- name: rm /var/lib/mysql
+  shell: rm -rf /var/lib/mysql
+
+- name: Initialize mysql
+  shell: /usr/sbin/mysqld --initialize
+
+- name: Change owner
+  shell: chown -R mysql:mysql /var/lib/mysql
+
+- name: Change owner
+  shell: chown -R mysql:mysql /var/run/mysqld
+
 - name: Start the MySQL service
-  service: name=mysql state=started enabled=yes
+  shell: /usr/sbin/mysqld --user=mysql &
 
 - name: Wait for mysql start
   wait_for: path=/var/lib/mysql/mysql.sock
 
-- name: Set mysql root passwd
-  mysql_user: name=root password={{ ophdb_passwd }} host={{ item }}
+- name: Read default password
+  shell: grep 'temporary password' /var/log/mysqld.log | awk '{print $11}' | tail -1
+  register: default_pwd
+
+- name: Set new password from temporary password
+  shell: 'mysql -e "SET PASSWORD = PASSWORD(''{{ ophdb_passwd }}'');" --connect-expired-password -uroot -p"{{ default_pwd.stdout }}"'
+
+- name: Set root pwd
+  mysql_user: name="root" password="{{ ophdb_passwd }}" host={{ item }} login_user="root" login_password="{{ ophdb_passwd }}"
   with_items:
     - "{{ ansible_hostname }}"
     - "{{ ansible_nodename }}"
@@ -171,6 +189,9 @@
     mode=0600
     owner={{ oph_user }}
     group={{ oph_user }}
+
+- name: Modify create_func.sql
+  shell: sed -i -- 's/TO `%`/TO `root`@`localhost`/g' /usr/local/ophidia/oph-cluster/oph-primitives/etc/create_func.sql
 
 - name: Import Ophidia primitives
   mysql_db: name=mysql state=import target=/usr/local/ophidia/oph-cluster/oph-primitives/etc/create_func.sql
@@ -291,11 +312,17 @@
 
 #######################################################
 # Task to change httpd port from 443 to 8443
-- name: Replace 443 port to 8443
+- name: Replace 443 port to 8443 (1)
   replace:
     path: /etc/httpd/conf.d/ssl.conf
-    regexp: '443'
-    replace: '8443'
+    regexp: 'Listen 443 https'
+    replace: 'Listen 8443 https'
+
+- name: Replace 443 port to 8443 (2)
+  replace:
+    path: /etc/httpd/conf.d/ssl.conf
+    regexp: '<VirtualHost _default_:443>'
+    replace: '<VirtualHost _default_:8443>'
 
 #######################################################
 # Tasks to start the services
@@ -308,7 +335,7 @@
 #######################################################
 # Task to start Ophidia service
 - name: Start ophidia server
-  shell: pgrep oph_server || (nohup oph_server 2>&1 > /dev/null &)
+  shell: pgrep oph_server || (nohup oph_server -s /usr/local/ophidia/oph-server/log/monitor.log 2>&1 > /dev/null &)
   args:
     executable: /bin/bash
     chdir: /usr/local/ophidia/oph-server/bin/
@@ -352,6 +379,20 @@
   args:
     executable: /bin/bash
     chdir: /root/
+
+- name: Download tasmin
+  get_url:
+    url: "http://esgf-node.cmcc.it/thredds/fileServer/esg_dataroot/cmip5/output1/CMCC/CMCC-CESM/rcp85/day/atmos/day/r1i1p1/v20170725/tasmin/tasmin_day_CMCC-CESM_rcp85_r1i1p1_20960101-21001231.nc"
+    dest: /data/tasmin_day_CMCC-CESM_rcp85_r1i1p1_20960101-21001231.nc
+    force: no
+    timeout: 1000
+
+- name: Download tasmax
+  get_url:
+    url: "http://esgf-node.cmcc.it/thredds/fileServer/esg_dataroot/cmip5/output1/CMCC/CMCC-CESM/rcp85/day/atmos/day/r1i1p1/v20170725/tasmax/tasmax_day_CMCC-CESM_rcp85_r1i1p1_20960101-21001231.nc"
+    dest: /data/tasmax_day_CMCC-CESM_rcp85_r1i1p1_20960101-21001231.nc
+    force: no
+    timeout: 1000
 
 # Download ECAS notebooks in user home
 - name: Download ECAS notebooks

@@ -1,0 +1,134 @@
+#!/bin/bash
+
+usage () { echo "How to use:
+ -t <host_name>
+ -f <file_path>
+ -s <sleep_time>
+ -u <user>";}
+
+tflag=false
+SLEEP=5
+FILE_PATH="."
+
+while getopts t:f:s:u:h option
+do
+        case "${option}"
+        in
+                t) tflag=true; TAG_VALUE=${OPTARG};;
+                f) FILE_PATH=$OPTARG;;
+		s) SLEEP=$OPTARG;;
+		u) USER=${OPTARG};;
+                h) usage; exit;;
+        esac
+done
+
+if ! $tflag
+then
+    echo "Option -t is required" >&2
+	usage
+    exit 1
+fi
+
+
+#METRIC_NAME=
+TAG_NAME="host"
+TAG_NAME_USER="user"
+#TAG_VALUE=
+
+cd ${FILE_PATH}
+echo Current directory: `pwd`
+
+FILE_PID=${TAG_VALUE}.pid
+echo $$ >> ${FILE_PID}
+
+FILE_LOG=${TAG_VALUE}.log
+echo "Saving in file" ${FILE_LOG}
+
+
+while true
+do
+
+
+################## CPU ###########################################################################
+
+	LOAD_1=`cat /proc/loadavg | awk '{print $1}'` 
+
+	#LINE PROTOCOL: format for writing points to InfluxDB
+	#<measurement>[,<tag_key>=<tag_value>[,<tag_key>=<tag_value>]] <field_key>=<field_value>
+	#[,<field_key>=<field_value>] [<timestamp>]
+	load_1="load_avg_1,${TAG_NAME}=${TAG_VALUE},${TAG_NAME_USER}=${USER} value=${LOAD_1} `date +%s%N`\n"
+
+	LOAD_5=`cat /proc/loadavg | awk '{print $2}'` 
+	load_5="load_avg_5,${TAG_NAME}=${TAG_VALUE},${TAG_NAME_USER}=${USER} value=${LOAD_5} `date +%s%N`\n"
+
+	LOAD_15=`cat /proc/loadavg | awk '{print $3}'` 
+	load_15="load_avg_15,${TAG_NAME}=${TAG_VALUE},${TAG_NAME_USER}=${USER} value=${LOAD_15} `date +%s%N`\n"
+
+
+################## DISK ###########################################################################
+
+	DUSED=`df | awk '{ if ($6 == "/") {print $3} }'`
+	dused="disk_used,${TAG_NAME}=${TAG_VALUE},${TAG_NAME_USER}=${USER} value=${DUSED} `date +%s%N`\n"
+
+	DFREE=`df | awk '{ if ($6 == "/") {print $4} }'`	
+	dfree="disk_free,${TAG_NAME}=${TAG_VALUE},${TAG_NAME_USER}=${USER} value=${DFREE} `date +%s%N`\n"
+
+	DTOTAL=`df | awk '{ if ($6 == "/") {print $2} }'`
+	dtotal="disk_tot,${TAG_NAME}=${TAG_VALUE},${TAG_NAME_USER}=${USER} value=${DTOTAL} `date +%s%N`\n"
+
+
+################## RAM ###########################################################################
+
+	MTOTAL=`free -m | grep Mem | awk '{print $2}'`
+	mtotal="mem_tot,${TAG_NAME}=${TAG_VALUE},${TAG_NAME_USER}=${USER} value=${MTOTAL} `date +%s%N`\n"
+
+	MUSED=`free -m | grep Mem | awk '{print $3}'`
+	mused="mem_used,${TAG_NAME}=${TAG_VALUE},${TAG_NAME_USER}=${USER} value=${MUSED} `date +%s%N`\n"
+
+	MFREE=`free -m | grep Mem | awk '{print $4}'`
+	mfree="mem_free,${TAG_NAME}=${TAG_VALUE},${TAG_NAME_USER}=${USER} value=${MFREE} `date +%s%N`\n"
+	
+	MTOT_FREE=`expr ${MTOTAL} - ${MFREE}`
+	mtot_free="mem_tot_free,${TAG_NAME}=${TAG_VALUE},${TAG_NAME_USER}=${USER} value=${MTOT_FREE} `date +%s%N`\n"
+
+        if [ "$MTOTAL" -ne "0" ]; then
+                div=$(echo "scale=2; ${MTOT_FREE} / ${MTOTAL}" | bc)
+                MPERC=$(echo "scale=2; ${div} * 100" | bc)
+        else
+                MPERC=0.0
+        fi
+	
+	mperc="mem_perc,${TAG_NAME}=${TAG_VALUE},${TAG_NAME_USER}=${USER} value=${MPERC} `date +%s%N`\n"
+
+
+################## SWAP ###########################################################################
+
+	SWAPUSED=`free -m | grep Swap | awk '{print $3}'`
+	swapused="swap_used,${TAG_NAME}=${TAG_VALUE},${TAG_NAME_USER}=${USER} value=${SWAPUSED} `date +%s%N`\n"
+
+	SWAPFREE=`free -m | grep Swap | awk '{print $4}'`
+	swapfree="swap_free,${TAG_NAME}=${TAG_VALUE},${TAG_NAME_USER}=${USER} value=${SWAPFREE} `date +%s%N`\n"
+
+	SWAPTOTAL=`free -m | grep Swap | awk '{print $2}'`
+
+	if [ "$SWAPTOTAL" -ne "0" ]; then
+		div=$(echo "scale=2; ${SWAPUSED} / ${SWAPTOTAL}" | bc)
+ 		SWAPPERC=$(echo "scale=2; ${div} * 100" | bc)
+	else
+ 		SWAPPERC=0.0
+	fi
+
+	swapperc="swap_perc,${TAG_NAME}=${TAG_VALUE},${TAG_NAME_USER}=${USER} value=${SWAPPERC} `date +%s%N`\n"
+
+	
+        values=$load_1$load_5$load_15$mtot_free$mperc$swapused$swapperc$dused$dfree
+
+	echo -e $values >> ${FILE_LOG}
+
+	sleep ${SLEEP}
+	curl -i -XPOST 'http://{{ private_server_ip }}:8086/api/v2/write?org=ECAS&bucket=monitor_db' --header 'Authorization: Token {{ admin_token.stdout  }}' --header 'Content-Type: text/plain; charset=utf-8' --data-binary @$FILE_LOG
+
+	rm $FILE_LOG
+
+done
+
