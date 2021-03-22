@@ -64,15 +64,37 @@
 
 #######################################################
 # Tasks to setup/config mysql and necessary databases
+- name: Clean mysql path
+  file: 
+    state: absent
+    path: /var/lib/mysql
+
+- name: Initialize mysql
+  shell: /usr/sbin/mysqld --initialize
+
+- name: Change owner
+  shell: chown -R mysql:mysql /var/lib/mysql
+
+- name: Change owner
+  shell: chown -R mysql:mysql /var/run/mysqld
+
 - name: Start the MySQL service
-  service: name=mysql state=started enabled=yes
+  shell: /usr/sbin/mysqld --user=mysql &
 
 - name: Wait for mysql start
   wait_for: path=/var/lib/mysql/mysql.sock
 
-- name: Set mysql root passwd
-  mysql_user: name=root password={{ ophdb_passwd }} host={{ item }} check_implicit_admin=yes login_user=root login_password={{ ophdb_passwd }}
+- name: Read default password
+  shell: grep 'temporary password' /var/log/mysqld.log | awk '{print $11}' | tail -1
+  register: default_pwd
+
+- name: Set new password from temporary password
+  shell: 'mysql -e "SET PASSWORD = PASSWORD(''{{ ophdb_passwd }}'');" --connect-expired-password -uroot -p"{{ default_pwd.stdout }}"'
+
+- name: Set root pwd
+  mysql_user: name="root" password="{{ ophdb_passwd }}" host={{ item }} login_user="root" login_password="{{ ophdb_passwd }}"
   with_items:
+    - "{{ ansible_hostname }}"
     - "{{ ansible_nodename }}"
     - 127.0.0.1
     - ::1
@@ -93,6 +115,9 @@
     mode=0600
     owner={{ oph_user }}
     group={{ oph_user }}
+
+- name: Modify create_func.sql
+  shell: sed -i -- 's/TO `%`/TO `root`@`localhost`/g' /usr/local/ophidia/oph-cluster/oph-primitives/etc/create_func.sql
 
 - name: Import Ophidia primitives
   mysql_db: name=mysql state=import target=/usr/local/ophidia/oph-cluster/oph-primitives/etc/create_func.sql
