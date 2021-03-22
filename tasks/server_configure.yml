@@ -140,8 +140,11 @@
   file: src=/data/home/{{ oph_user }}/.ophidia dest={{ user_home }}/.ophidia state=link
 
 #######################################################
-- name: rm /var/lib/mysql
-  shell: rm -rf /var/lib/mysql
+# Tasks to setup/config mysql and necessary databases
+- name: Clean mysql path
+  file: 
+    state: absent
+    path: /var/lib/mysql
 
 - name: Initialize mysql
   shell: /usr/sbin/mysqld --initialize

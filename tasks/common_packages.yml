@@ -15,8 +15,10 @@
     - "@development tools"
     - libssh2
     - libtool-ltdl
+    - libtool-ltdl-devel
     - mpich
     - mpich-autoload
+    - mysql-community-devel
     - mysql-community-server
     - MySQL-python
     - python

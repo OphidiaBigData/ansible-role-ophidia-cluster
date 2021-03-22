@@ -1,5 +1,4 @@
 [oph-io]
-oph-io1 ansible_default_ipv4=192.168.1.14
+oph-io1 ansible_default_ipv4=192.168.1.23
 [oph-server]
-oph-server ansible_default_ipv4=192.168.1.19
-
+oph-server ansible_default_ipv4=192.168.1.20

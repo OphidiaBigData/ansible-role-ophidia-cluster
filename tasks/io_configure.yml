@@ -115,8 +115,10 @@
 
 #######################################################
 # Tasks to setup/config mysql and necessary databases
-- name: rm /var/lib/mysql
-  shell: rm -rf /var/lib/mysql
+- name: Clean mysql path
+  file: 
+    state: absent
+    path: /var/lib/mysql
 
 - name: Initialize mysql
   shell: /usr/sbin/mysqld --initialize
@@ -167,7 +169,6 @@
 
 - name: Modify create_func.sql
   shell: sed -i -- 's/TO `%`/TO `root`@`localhost`/g' /usr/local/ophidia/oph-cluster/oph-primitives/etc/create_func.sql
-
 
 - name: Import Ophidia primitives
   mysql_db: name=mysql state=import target=/usr/local/ophidia/oph-cluster/oph-primitives/etc/create_func.sql
