@@ -203,7 +203,7 @@
     pip: 
       name: shapely 
       executable: pip3
-      extra_args: --no-binary
+      extra_args: --no-binary shapely
 
   - name: Install cartopy
     pip:
