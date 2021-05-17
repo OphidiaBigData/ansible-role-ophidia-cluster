@@ -133,87 +133,89 @@
   ################################
   # Tasks to install JupyterHub 
   ###############################
-  - name: Install python 3.6
-    yum: name={{ item }} state=present
-    with_items:
-      - python36
-      - python36-pip
-      - python36-devel
-      - geos
-      - geos-devel
-      - nodejs
-      - libtiff-devel
-      - libsqlite3x
-      - libsqlite3x-devel
+  - block:
+    - name: Install python 3.6
+      yum: name={{ item }} state=present
+      with_items:
+        - python36
+        - python36-pip
+        - python36-devel
+        - geos
+        - geos-devel
+        - nodejs
+        - libtiff-devel
+        - libsqlite3x
+        - libsqlite3x-devel
   
-  - name: Install JupyterHub, notebook, numpy, matplotlib and PyOphidia
-    pip: name={{ item }} executable=pip3
-    with_items:
-      - jupyterhub==0.9.6
-      - jupyterhub-dummyauthenticator
-      - notebook
-      - numpy
-      - matplotlib
-      - pyophidia
-      - scipy
+    - name: Install JupyterHub, notebook, numpy, matplotlib and PyOphidia
+      pip: name={{ item }} executable=pip3
+      with_items:
+        - jupyterhub==0.9.6
+        - jupyterhub-dummyauthenticator
+        - notebook
+        - numpy
+        - matplotlib
+        - pyophidia
+        - scipy
   
-  - name: Install configurable-http-proxy
-    npm: global=yes name=configurable-http-proxy
+    - name: Install configurable-http-proxy
+      npm: global=yes name=configurable-http-proxy
  
-  - name: Copy jupyterhub-bash.sh file
-    copy:
-      src: jupyterhub-bash.sh
-      dest: /usr/local/ophidia/extra/jupyterhub-bash.sh
-      mode: 0555
+    - name: Copy jupyterhub-bash.sh file
+      copy:
+        src: jupyterhub-bash.sh
+        dest: /usr/local/ophidia/extra/jupyterhub-bash.sh
+        mode: 0555
 
-  ########################################
-  # Tasks to install proj
-  ########################################
-  - name: Check if proj is installed
-    stat: path=/usr/local/lib/libproj.so
-    register: libproj
+    ########################################
+    # Tasks to install proj
+    ########################################
+    - name: Check if proj is installed
+      stat: path=/usr/local/lib/libproj.so
+      register: libproj
   
-  - name: Create proj folder
-    file: path=/home/{{ oph_user }}/proj state=directory mode=0755
-    when: libproj.stat.exists == False
+    - name: Create proj folder
+      file: path=/home/{{ oph_user }}/proj state=directory mode=0755
+      when: libproj.stat.exists == False
  
-  - name: Download proj
-    get_url:
-      url: "https://download.osgeo.org/proj/proj-6.0.0.tar.gz"
-      dest: /home/{{ oph_user }}/proj/proj-6.0.0.tar.gz
-      force: no
-      timeout: 1000
-    when: libproj.stat.exists == False
+    - name: Download proj
+      get_url:
+        url: "https://download.osgeo.org/proj/proj-6.0.0.tar.gz"
+        dest: /home/{{ oph_user }}/proj/proj-6.0.0.tar.gz
+        force: no
+        timeout: 1000
+      when: libproj.stat.exists == False
 
-  - name: Extract proj
-    unarchive:
-      src: /home/{{ oph_user }}/proj/proj-6.0.0.tar.gz
-      dest: /home/{{ oph_user }}/proj
-      copy: no
-      creates: /home/{{ oph_user }}/proj/proj-6.0.0/*
-    when: libproj.stat.exists == False
+    - name: Extract proj
+      unarchive:
+        src: /home/{{ oph_user }}/proj/proj-6.0.0.tar.gz
+        dest: /home/{{ oph_user }}/proj
+        copy: no
+        creates: /home/{{ oph_user }}/proj/proj-6.0.0/*
+      when: libproj.stat.exists == False
 
-  - name: Install proj
-    shell: ./configure && make && make install    
-    args:
-      chdir: /home/{{ oph_user }}/proj/proj-6.0.0
-    when: libproj.stat.exists == False
+    - name: Install proj
+      shell: ./configure && make && make install    
+      args:
+        chdir: /home/{{ oph_user }}/proj/proj-6.0.0
+      when: libproj.stat.exists == False
 
-  - name: Install shapely
-    pip: 
-      name: shapely 
-      executable: pip3
-      extra_args: --no-binary shapely
+    - name: Install shapely
+      pip: 
+        name: shapely 
+        executable: pip3
+        extra_args: --no-binary shapely
 
-  - name: Install cartopy
-    pip:
-      name: cartopy
-      executable: pip3 
+    - name: Install cartopy
+      pip:
+        name: cartopy
+        executable: pip3 
 
-  - name: Delete proj folder
-    file:
-      path: /home/{{ oph_user }}/proj
-      state: absent
+    - name: Delete proj folder
+      file:
+        path: /home/{{ oph_user }}/proj
+        state: absent
+    when: jupyter_installation
 
   - name: Check Onedata 
     stat: path=/opt/oneclient/bin/oneclient

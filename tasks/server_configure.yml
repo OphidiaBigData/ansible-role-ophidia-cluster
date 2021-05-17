@@ -347,42 +347,44 @@
 
 #######################################################
 # Tasks to configure JupyterHub
-- name: Generate random password
-  set_fact: 
-    jupyter_pwd: "{{ lookup('password','/dev/null length=10 chars=ascii_letters,digits,hexdigits') }}"
+- block:
+  - name: Generate random password
+    set_fact: 
+      jupyter_pwd: "{{ lookup('password','/dev/null length=10 chars=ascii_letters,digits,hexdigits') }}"
 
-- name: Copy template of 'jupyterhub_config' file
-  template:
-    src=jupyterhub_config.py.j2
-    dest=/root/jupyterhub_config.py
-    mode=0700
+  - name: Copy template of 'jupyterhub_config' file
+    template:
+      src=jupyterhub_config.py.j2
+      dest=/root/jupyterhub_config.py
+      mode=0700
 
-- name: Check Jupyter SSL cert
-  stat: path=/root/server.crt
-  register: jupytercert
+  - name: Check Jupyter SSL cert
+    stat: path=/root/server.crt
+    register: jupytercert
 
-- name: Create HTTP server SSL cert
-  command: >
-    openssl req
-      -x509
-      -nodes
-      -days 730
-      -newkey rsa:2048
-      -passout pass:{{ cert_passwd }}
-      -subj "/CN={{ public_server_ip }} "
-      -keyout /root/server.key
-      -out /root/server.crt
-  args:
-    creates: /root/server.crt
-  when: jupytercert.stat.exists == False
+  - name: Create HTTP server SSL cert
+    command: >
+      openssl req
+        -x509
+        -nodes
+        -days 730
+        -newkey rsa:2048
+        -passout pass:{{ cert_passwd }}
+        -subj "/CN={{ public_server_ip }} "
+        -keyout /root/server.key
+        -out /root/server.crt
+    args:
+      creates: /root/server.crt
+    when: jupytercert.stat.exists == False
 
-# Task to start JupyterHub service
-- name: Start JupyterHub
-  shell: pgrep jupyterhub || (nohup /usr/local/bin/jupyterhub > jupyter.log 2>&1 &)
-  args:
-    executable: /bin/bash
-    chdir: /root/
-
+  # Task to start JupyterHub service
+  - name: Start JupyterHub
+    shell: pgrep jupyterhub || (nohup /usr/local/bin/jupyterhub > jupyter.log 2>&1 &)
+    args:
+      executable: /bin/bash
+      chdir: /root/
+  when: jupyter_installation
+ 
 - name: Download tasmin
   get_url:
     url: "http://esgf-node.cmcc.it/thredds/fileServer/esg_dataroot/cmip5/output1/CMCC/CMCC-CESM/rcp85/day/atmos/day/r1i1p1/v20170725/tasmin/tasmin_day_CMCC-CESM_rcp85_r1i1p1_20960101-21001231.nc"

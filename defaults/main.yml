@@ -20,3 +20,4 @@ node_type: 'server'
 aaa_endpoint: '127.0.0.1'
 io_cpus: 1
 force_reinstall: true
+jupyter_installation: false
